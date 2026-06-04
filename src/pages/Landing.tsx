@@ -94,7 +94,7 @@ export default function Landing() {
                   step: '1',
                   icon: '🖊️',
                   title: 'Set up a profile',
-                  body: 'A caretaker takes 5 minutes to add your loved one's name, favourite music, key family members, and a few happy memories.',
+                  body: "A caretaker takes 5 minutes to add your loved one's name, favourite music, key family members, and a few happy memories.",
                 },
                 {
                   step: '2',

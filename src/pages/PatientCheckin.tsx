@@ -18,6 +18,23 @@ import type { LaneResponse } from '../lib/ai'
 type Step = 'greeting' | 'mood' | 'conversation' | 'music' | 'family' | 'celebration'
 const MAX_CONV_TURNS = 4
 
+// ─── Web Speech API — minimal local types (not fully present in all TS DOM versions) ──
+interface SpeechRecognitionLike {
+  lang: string;
+  interimResults: boolean;
+  onresult: ((ev: { results: { [i: number]: { [j: number]: { transcript: string } } } }) => void) | null;
+  onerror: (() => void) | null;
+  onend:   (() => void) | null;
+  start:   () => void;
+}
+type SpeechRecognitionCtor = new () => SpeechRecognitionLike;
+
+function getSpeechCtor(): SpeechRecognitionCtor | undefined {
+  const w = window as unknown as Record<string, unknown>;
+  const ctor = w['SpeechRecognition'] ?? w['webkitSpeechRecognition'];
+  return ctor as SpeechRecognitionCtor | undefined;
+}
+
 // ─── Thinking indicator ───────────────────────────────────────────────────────
 function Thinking() {
   return (
@@ -100,12 +117,7 @@ function PatientCheckinContent({ profile }: { profile: PatientProfile }) {
   const [selectedMusic,  setSelectedMusic] = useState<YouTubeLink | null>(null)
   const [updatedProfile, setUpdatedProfile] = useState<PatientProfile | null>(null)
 
-  const hasSpeech = useRef(
-    !!(
-      window.SpeechRecognition ??
-      (window as unknown as { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition
-    ),
-  )
+  const hasSpeech = useRef(!!(getSpeechCtor()))
 
   // Scroll chat to bottom on new messages
   useEffect(() => {
@@ -289,15 +301,13 @@ function PatientCheckinContent({ profile }: { profile: PatientProfile }) {
 
   // ── Mic input ──────────────────────────────────────────────────────────────
   function startListening() {
-    const API =
-      window.SpeechRecognition ??
-      (window as unknown as { webkitSpeechRecognition?: typeof SpeechRecognition }).webkitSpeechRecognition
-    if (!API) return
-    const recognition = new API()
+    const Ctor = getSpeechCtor()
+    if (!Ctor) return
+    const recognition = new Ctor()
     recognition.lang = 'en-US'
     recognition.interimResults = false
     setIsListening(true)
-    recognition.onresult = (ev: SpeechRecognitionEvent) => {
+    recognition.onresult = (ev) => {
       setInputText(ev.results[0][0].transcript)
       setIsListening(false)
     }

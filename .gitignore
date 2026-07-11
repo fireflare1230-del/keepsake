@@ -1,9 +1,16 @@
+# Dependencies
 node_modules/
+
+# Build output
 dist/
-dist-ssr/
-*.local
-.env
-.env.*
-!.env.example
+
+# Editor / OS noise
 .DS_Store
 Thumbs.db
+*.local
+.vscode/
+.idea/
+
+# Logs
+npm-debug.log*
+*.log

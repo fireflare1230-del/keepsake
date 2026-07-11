@@ -1,14 +1,30 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'
-import './index.css'
-import { initVoice } from './lib/ai'
 
-// Start loading the best available TTS voice immediately on page load
-initVoice()
+// Inter, self-hosted (no CDN calls — privacy promise, NFR-12; offline, NFR-17)
+import '@fontsource/inter/400.css'
+import '@fontsource/inter/500.css'
+import '@fontsource/inter/600.css'
+import '@fontsource/inter/700.css'
+import '@fontsource/inter/800.css'
+
+import './styles/index.css'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <App />
-  </React.StrictMode>,
+  </React.StrictMode>
 )
+
+// Register the service worker so Keepsake can be pinned to a tablet
+// home screen and opened offline. Service workers only exist on
+// https:// or localhost — when the app is opened as a plain local file
+// (file://) we quietly skip this; the app still works.
+if ('serviceWorker' in navigator && window.location.protocol !== 'file:') {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {
+      /* not fatal — the app runs fine without offline caching */
+    })
+  })
+}

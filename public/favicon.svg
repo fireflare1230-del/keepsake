@@ -1,5 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <rect width="100" height="100" rx="22" fill="#5E93AC"/>
-  <text x="50" y="75" font-family="Inter,sans-serif" font-size="64" font-weight="700"
-        text-anchor="middle" fill="white">K</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Keepsake mark: a warm amber tile holding a cream heart with a gentle spark -->
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="#E8A04C"/>
+  <path d="M32 47.5C31 46.7 16 36.6 16 26.8 16 21.4 20.2 17 25.4 17c2.7 0 5.2 1.2 6.6 3.2C33.4 18.2 35.9 17 38.6 17 43.8 17 48 21.4 48 26.8c0 9.8-15 19.9-16 20.7z" fill="#FAF6F0"/>
+  <circle cx="45" cy="15.5" r="3" fill="#FAF6F0" opacity="0.85"/>
 </svg>

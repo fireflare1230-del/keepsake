@@ -1,0 +1,101 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---------------------------------------------------------------------------
+   Keepsake global styles
+   Warm, calm, elderly-friendly (PRD §10.1): 18px+ body text, soft cream
+   background (never pure white), generous spacing, always-visible focus.
+--------------------------------------------------------------------------- */
+
+@layer base {
+  html {
+    @apply bg-cream text-ink antialiased;
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  body {
+    @apply bg-cream text-ink text-base;
+    margin: 0;
+    min-height: 100vh;
+  }
+
+  /* Visible focus for keyboard users everywhere (NFR-4) */
+  :focus-visible {
+    outline: 3px solid #3e6e86;
+    outline-offset: 3px;
+    border-radius: 6px;
+  }
+
+  ::selection {
+    background: #e8a04c66;
+  }
+
+  /* Calm > slick: honor users who turn animations off */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  h1, h2, h3, h4 {
+    @apply font-semibold text-ink;
+    text-wrap: balance;
+  }
+}
+
+@layer components {
+  /* Soft card — the basic surface of the whole app */
+  .card {
+    @apply rounded-xl bg-white/70 shadow-card border border-cream-deep p-6;
+    background-color: #fffdf9; /* softened white, still not #fff glare on cream */
+  }
+
+  /* Gentle fade-and-rise used when a new step appears in the visit flow */
+  .step-enter {
+    animation: stepEnter 0.45s ease-out both;
+  }
+  @keyframes stepEnter {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Lane is "thinking" — three soft dots, slow and unhurried */
+  .thinking-dot {
+    @apply inline-block h-2.5 w-2.5 rounded-full bg-brand;
+    animation: thinking 1.6s ease-in-out infinite;
+  }
+  .thinking-dot:nth-child(2) { animation-delay: 0.25s; }
+  .thinking-dot:nth-child(3) { animation-delay: 0.5s; }
+  @keyframes thinking {
+    0%, 70%, 100% { opacity: 0.25; transform: translateY(0); }
+    35% { opacity: 1; transform: translateY(-3px); }
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Print styles — used by the caretaker report (one-tap printable summary).
+   Everything except the report content is hidden when printing.
+--------------------------------------------------------------------------- */
+@media print {
+  body {
+    background: #fff !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-block {
+    box-shadow: none !important;
+    border-color: #ddd !important;
+  }
+}

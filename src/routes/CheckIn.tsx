@@ -195,6 +195,9 @@ function VisitFlow({ profile, preview }: { profile: Profile; preview: boolean })
     if (turn.factShared && fact) {
       setVisit((v) => ({ ...v, factReinforced: fact }))
     }
+    if (turn.source === 'ai') {
+      setVisit((v) => (v.mode === 'ai' ? v : { ...v, mode: 'ai' }))
+    }
     if (turn.done) setTalkDone(true)
   }
 

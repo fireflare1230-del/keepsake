@@ -1,14 +1,23 @@
 /**
- * Lane's conversation engine.
+ * Lane's conversation engine — one door for both modes.
  *
- * M4: the scripted playbook (no key needed — PRD §8.6).
- * M5 adds the AI path; the check-in UI only ever calls nextLaneTurn(),
- * so both modes flow through one door and AI failures fall back to the
- * scripted lines mid-visit without breaking anything (PRD §13).
+ * With an API key: live Claude conversation under the golden-rule system
+ * prompt with the strict JSON contract (§8.2/8.3). Without a key — or the
+ * moment anything fails (network, bad key, malformed JSON) — the same
+ * request is answered from the scripted playbook instead, so a visit can
+ * NEVER crash or show raw model text to the person (PRD §13, §16.4).
  */
 
 import type { Theme } from '../../data/themes'
 import type { Message, Profile, Visit, VisitSummary } from '../../types'
+import { loadSettings } from '../../lib/storage'
+import { callMessages, type ChatTurn } from './apiClient'
+import { parseLaneReply, parseSummary } from './parser'
+import {
+  buildLaneSystemPrompt,
+  buildSummarySystemPrompt,
+  renderTranscriptForSummary,
+} from './prompt'
 
 export interface LaneTurnRequest {
   profile: Profile
@@ -28,6 +37,8 @@ export interface LaneTurn {
   done: boolean
   /** True when this turn restated the gentle fact. */
   factShared?: boolean
+  /** Where the turn came from — lets the visit record its mode honestly. */
+  source: 'ai' | 'scripted'
 }
 
 /** Scripted turns end after the opener, two follow-ups, and a wrap-up. */
@@ -38,7 +49,12 @@ export function scriptedTurn(request: LaneTurnRequest): LaneTurn {
 
   if (turnIndex < theme.turns.length) {
     const turn = theme.turns[turnIndex]
-    return { message: turn.message, suggestions: turn.suggestions, done: false }
+    return {
+      message: turn.message,
+      suggestions: turn.suggestions,
+      done: false,
+      source: 'scripted',
+    }
   }
 
   // Wrap-up: restate the gentle fact as a warm statement — never a quiz.
@@ -48,12 +64,14 @@ export function scriptedTurn(request: LaneTurnRequest): LaneTurn {
       suggestions: ["That's right", "That's nice to hear"],
       done: true,
       factShared: true,
+      source: 'scripted',
     }
   }
   return {
     message: theme.closing,
     suggestions: ['That was lovely', 'Thank you'],
     done: true,
+    source: 'scripted',
   }
 }
 
@@ -107,10 +125,82 @@ export function scriptedSummary(visit: Visit, profile: Profile): VisitSummary {
   }
 }
 
+/* ------------------------------ the AI path ------------------------------ */
+
+/**
+ * The talk-step transcript becomes Claude chat turns. Lane's earlier
+ * replies are re-encoded as the JSON they arrived in, which quietly
+ * reinforces the reply contract on every call.
+ */
+function toChatTurns(request: LaneTurnRequest): ChatTurn[] {
+  const turns: ChatTurn[] = []
+  for (const message of request.history) {
+    if (message.role === 'lane') {
+      if (!message.suggestions) continue // greeting/mood lines aren't chat turns
+      turns.push({
+        role: 'assistant',
+        content: JSON.stringify({
+          message: message.text,
+          suggestions: message.suggestions,
+        }),
+      })
+    } else {
+      turns.push({ role: 'user', content: message.text })
+    }
+  }
+
+  // Control notes travel as bracketed user text (§8.2). They open the
+  // conversation and cue the warm wrap-up on the final exchange.
+  if (turns.length === 0 || turns[turns.length - 1].role === 'assistant') {
+    turns.push({ role: 'user', content: '[The visit is beginning. Open the conversation now.]' })
+  } else if (request.turnIndex >= SCRIPTED_FINAL_TURN) {
+    turns[turns.length - 1] = {
+      role: 'user',
+      content:
+        turns[turns.length - 1].content +
+        '\n\n[This is the last exchange of today\'s chat. Warmly wrap up in 1-2 sentences' +
+        (request.fact ? ' and weave in the gentle fact as a warm statement' : '') +
+        '. Keep the suggestions to simple acknowledgments.]',
+    }
+  }
+  return turns
+}
+
+async function aiTurn(request: LaneTurnRequest): Promise<LaneTurn | null> {
+  const settings = loadSettings()
+  if (!settings.apiKey) return null
+
+  const result = await callMessages({
+    apiKey: settings.apiKey,
+    model: settings.model,
+    system: buildLaneSystemPrompt(request.profile, request.theme, request.fact),
+    messages: toChatTurns(request),
+    maxTokens: 300,
+  })
+  if (!result.ok) return null
+
+  const parsed = parseLaneReply(result.text)
+  if (!parsed) return null // malformed JSON → caller falls back (§16.4)
+
+  const done = request.turnIndex >= SCRIPTED_FINAL_TURN
+  return {
+    message: parsed.message,
+    suggestions: parsed.suggestions,
+    done,
+    factShared: done && Boolean(request.fact),
+    source: 'ai',
+  }
+}
+
 /* ----------------------- entry points used by the UI ---------------------- */
-/* M5 replaces the bodies of these two with AI-first, scripted-fallback.    */
 
 export async function nextLaneTurn(request: LaneTurnRequest): Promise<LaneTurn> {
+  try {
+    const turn = await aiTurn(request)
+    if (turn) return turn
+  } catch {
+    /* any surprise still lands on the scripted path */
+  }
   return scriptedTurn(request)
 }
 
@@ -118,5 +208,23 @@ export async function buildVisitSummary(
   visit: Visit,
   profile: Profile
 ): Promise<VisitSummary> {
+  try {
+    const settings = loadSettings()
+    if (settings.apiKey) {
+      const result = await callMessages({
+        apiKey: settings.apiKey,
+        model: settings.model,
+        system: buildSummarySystemPrompt(profile),
+        messages: [{ role: 'user', content: renderTranscriptForSummary(visit, profile) }],
+        maxTokens: 500,
+      })
+      if (result.ok) {
+        const parsed = parseSummary(result.text)
+        if (parsed) return { ...parsed, generatedBy: 'ai' }
+      }
+    }
+  } catch {
+    /* fall through to the honest template */
+  }
   return scriptedSummary(visit, profile)
 }

@@ -1,22 +1,21 @@
-// Large, accessible emoji mood selector — 5 options, minimum 72px touch targets
+// 2×2 mood grid — matches the ReMind design language
 
 interface Props {
-  value: number | null;
-  onChange: (mood: number) => void;
-  disabled?: boolean;
+  value: number | null
+  onChange: (mood: number) => void
+  disabled?: boolean
 }
 
 const MOODS = [
-  { value: 1, emoji: '😔', label: 'Not great' },
-  { value: 2, emoji: '😕', label: 'A little low' },
-  { value: 3, emoji: '😊', label: 'Okay' },
-  { value: 4, emoji: '😄', label: 'Pretty good' },
-  { value: 5, emoji: '😁', label: 'Wonderful!' },
+  { value: 5, emoji: '😊', label: 'Happy' },
+  { value: 4, emoji: '😌', label: 'Calm' },
+  { value: 2, emoji: '😴', label: 'Tired' },
+  { value: 1, emoji: '😟', label: 'Worried' },
 ]
 
 export default function MoodPicker({ value, onChange, disabled }: Props) {
   return (
-    <div className="flex gap-3 justify-center flex-wrap" role="radiogroup" aria-label="How are you feeling today?">
+    <div className="grid grid-cols-2 gap-3" role="radiogroup" aria-label="How are you feeling today?">
       {MOODS.map(m => (
         <button
           key={m.value}
@@ -26,17 +25,17 @@ export default function MoodPicker({ value, onChange, disabled }: Props) {
           disabled={disabled}
           onClick={() => onChange(m.value)}
           className={[
-            'flex flex-col items-center gap-1 rounded-2xl p-3 min-w-[72px] min-h-[72px]',
-            'transition-all duration-150 cursor-pointer select-none',
-            'border-2 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2',
+            'bg-white rounded-2xl p-5 flex flex-col items-center gap-2 shadow-sm',
+            'border-2 transition-all duration-150 active:scale-95 cursor-pointer',
+            'focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
             value === m.value
-              ? 'border-brand bg-brand/10 scale-110 shadow-md'
-              : 'border-transparent bg-white/70 hover:border-brand/30 hover:scale-105',
+              ? 'border-primary bg-primary/5 shadow-md scale-[1.03]'
+              : 'border-transparent hover:border-primary/30',
             disabled ? 'opacity-50 cursor-not-allowed' : '',
           ].join(' ')}
         >
-          <span className="text-4xl leading-none">{m.emoji}</span>
-          <span className="text-xs font-medium text-navy/70 text-center leading-tight">{m.label}</span>
+          <span className="text-5xl leading-none">{m.emoji}</span>
+          <span className="text-base font-semibold text-navy">{m.label}</span>
         </button>
       ))}
     </div>

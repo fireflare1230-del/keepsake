@@ -1,191 +1,175 @@
 import { useNavigate } from 'react-router-dom'
 import { getProfiles } from '../lib/storage'
+import BottomNav from '../components/BottomNav'
 
 export default function Landing() {
-  const navigate  = useNavigate()
-  const profiles  = getProfiles()
+  const navigate   = useNavigate()
+  const profiles   = getProfiles()
   const hasProfiles = profiles.length > 0
 
   function startVisit() {
     if (profiles.length === 1) {
       navigate(`/checkin/${profiles[0].id}`)
     } else if (profiles.length > 1) {
-      // Multiple profiles — go to caretaker to pick
       navigate('/caretaker')
     } else {
       navigate('/onboarding')
     }
   }
 
-  return (
-    <div className="min-h-screen bg-cream text-navy flex flex-col">
+  // ── Welcome view (no profiles yet) ────────────────────────────────────────
+  if (!hasProfiles) {
+    return (
+      <div className="min-h-screen bg-[#F5F5F7] flex flex-col">
+        <header className="bg-white px-5 py-4 flex items-center justify-between shadow-sm">
+          <span className="font-bold text-navy text-xl tracking-tight">Keepsake</span>
+          <button
+            onClick={() => navigate('/caretaker')}
+            className="text-sm text-navy/50 font-medium hover:text-navy"
+          >
+            Login
+          </button>
+        </header>
 
-      {/* ── Nav ───────────────────────────────────────────────────────────── */}
-      <header className="flex items-center justify-between px-6 py-4 max-w-5xl mx-auto w-full">
-        <div className="flex items-center gap-2">
-          <span className="text-2xl font-bold text-brand">Keepsake</span>
+        <div className="flex-1 flex flex-col items-center justify-center px-6 py-10">
+          <div className="max-w-sm w-full">
+
+            <div className="text-center mb-10">
+              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-amber-200 to-orange-300
+                              mx-auto mb-6 flex items-center justify-center text-4xl shadow-md">
+                💙
+              </div>
+              <h1 className="text-3xl font-extrabold text-navy leading-tight mb-3">
+                Welcome to Keepsake
+              </h1>
+              <p className="text-navy/60 text-lg leading-relaxed">
+                Help your loved one preserve their story through gentle AI conversations.
+              </p>
+            </div>
+
+            <div className="space-y-4 mb-10">
+              {[
+                {
+                  num: '1', icon: '🖊️', title: 'Add Patient Info',
+                  body: 'Set up a profile for your loved one with basic context and happy memories.',
+                },
+                {
+                  num: '2', icon: '📸', title: 'Share Key Memories',
+                  body: 'Upload key memories and add family members to ground every conversation.',
+                },
+                {
+                  num: '3', icon: '📱', title: 'Connect the App',
+                  body: "Your loved one starts their daily gentle check-in — Lane will be there.",
+                },
+              ].map(s => (
+                <div key={s.num} className="bg-white rounded-2xl p-5 shadow-sm flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center
+                                  text-primary font-extrabold text-lg shrink-0">
+                    {s.num}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xl">{s.icon}</span>
+                      <h3 className="font-bold text-navy text-base">{s.title}</h3>
+                    </div>
+                    <p className="text-navy/60 text-sm leading-relaxed">{s.body}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={() => navigate('/onboarding')}
+              className="btn-primary w-full text-xl py-4 rounded-2xl"
+            >
+              Get Started →
+            </button>
+            <p className="text-center text-navy/40 text-sm mt-4">
+              Already set up?{' '}
+              <button
+                onClick={() => navigate('/caretaker')}
+                className="text-brand font-semibold hover:underline"
+              >
+                Login
+              </button>
+            </p>
+          </div>
         </div>
+      </div>
+    )
+  }
+
+  // ── Home view (profiles exist) ─────────────────────────────────────────────
+  return (
+    <div className="min-h-screen bg-[#F5F5F7] flex flex-col pb-16">
+      <header className="bg-white px-5 py-4 flex items-center justify-between shadow-sm">
+        <span className="font-bold text-navy text-xl tracking-tight">Keepsake</span>
         <button
           onClick={() => navigate('/caretaker')}
-          className="btn-ghost text-base px-4 py-2 min-h-[40px]"
+          className="text-sm text-navy/50 font-medium hover:text-navy"
         >
           Caretaker Area
         </button>
       </header>
 
-      {/* ── Hero ──────────────────────────────────────────────────────────── */}
-      <main className="flex-1">
-        <section className="max-w-3xl mx-auto px-6 pt-16 pb-12 text-center">
-          <p className="text-brand font-semibold text-lg mb-3 tracking-wide uppercase text-sm">
-            Reconnect. Remember.
-          </p>
-          <h1 className="text-5xl font-extrabold text-navy leading-tight mb-6">
-            Help your loved one remember{' '}
-            <span className="text-primary">the moments that matter.</span>
-          </h1>
-          <p className="text-xl text-navy/70 max-w-xl mx-auto mb-10 leading-relaxed">
-            Keepsake is a gentle daily companion that uses AI-guided conversation
-            to spark warm memories, lift mood, and keep families connected —
-            all with a simple tap.
-          </p>
+      <div className="flex-1 overflow-y-auto px-4 py-5 max-w-sm mx-auto w-full space-y-4">
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            {hasProfiles ? (
-              <>
-                <button onClick={startVisit} className="btn-primary text-xl px-10 py-4">
-                  Begin Today's Visit
-                </button>
-                <button onClick={() => navigate('/caretaker')} className="btn-ghost text-xl px-10 py-4">
-                  Caretaker Area
-                </button>
-              </>
-            ) : (
-              <button onClick={() => navigate('/onboarding')} className="btn-primary text-xl px-10 py-4">
-                Get Started — It's Free
+        <div className="bg-white rounded-3xl p-6 shadow-sm text-center">
+          <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-amber-200 to-orange-300
+                          mx-auto mb-4 flex items-center justify-center text-4xl shadow-sm">
+            💙
+          </div>
+          <h2 className="text-2xl font-extrabold text-navy mb-1">Ready for today's visit?</h2>
+          <p className="text-navy/55 text-base mb-5">Lane is waiting to chat.</p>
+          <button onClick={startVisit} className="btn-primary w-full text-xl py-4 rounded-2xl">
+            Begin Today's Visit
+          </button>
+        </div>
+
+        {profiles.length > 1 && (
+          <div className="space-y-2">
+            <p className="text-xs font-bold text-navy/40 uppercase tracking-widest px-1">Choose a profile</p>
+            {profiles.map(p => (
+              <button
+                key={p.id}
+                onClick={() => navigate(`/checkin/${p.id}`)}
+                className="w-full bg-white rounded-2xl px-5 py-4 flex items-center justify-between shadow-sm border-2 border-transparent hover:border-primary/30 transition-all"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center text-xl">👤</div>
+                  <span className="font-semibold text-navy text-lg">{p.preferredName || p.name}</span>
+                </div>
+                {p.streak > 0 && (
+                  <span className="text-primary font-bold flex items-center gap-1">🔥 {p.streak}</span>
+                )}
               </button>
-            )}
+            ))}
           </div>
-
-          {hasProfiles && profiles.length > 1 && (
-            <div className="mt-8 flex flex-wrap gap-3 justify-center">
-              {profiles.map(p => (
-                <button
-                  key={p.id}
-                  onClick={() => navigate(`/checkin/${p.id}`)}
-                  className="bg-white rounded-2xl px-5 py-3 border-2 border-brand/20 hover:border-brand transition-colors shadow-sm"
-                >
-                  <span className="font-semibold text-navy">{p.preferredName || p.name}</span>
-                  {p.streak > 0 && (
-                    <span className="ml-2 text-primary font-bold">🔥 {p.streak}</span>
-                  )}
-                </button>
-              ))}
-            </div>
-          )}
-        </section>
-
-        {/* ── How it works ──────────────────────────────────────────────── */}
-        <section className="bg-white/60 py-16">
-          <div className="max-w-4xl mx-auto px-6">
-            <h2 className="text-3xl font-bold text-center mb-12">How it works</h2>
-            <div className="grid md:grid-cols-3 gap-8">
-              {[
-                {
-                  step: '1',
-                  icon: '🖊️',
-                  title: 'Set up a profile',
-                  body: "A caretaker takes 5 minutes to add your loved one's name, favourite music, key family members, and a few happy memories.",
-                },
-                {
-                  step: '2',
-                  icon: '💬',
-                  title: 'Lane leads the conversation',
-                  body: 'Each day, Lane — a warm AI companion — greets them by name, checks in on their mood, and guides a gentle themed conversation.',
-                },
-                {
-                  step: '3',
-                  icon: '📋',
-                  title: 'Caretakers stay informed',
-                  body: 'After every visit, Keepsake gives the caretaker a private summary: mood trends, engagement, highlights, and any moments to follow up on.',
-                },
-              ].map(item => (
-                <div key={item.step} className="text-center">
-                  <div className="w-16 h-16 rounded-full bg-brand/10 flex items-center justify-center mx-auto mb-4 text-3xl">
-                    {item.icon}
-                  </div>
-                  <h3 className="text-xl font-bold mb-2">{item.title}</h3>
-                  <p className="text-navy/70 leading-relaxed">{item.body}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ── Origin story ──────────────────────────────────────────────── */}
-        <section className="max-w-3xl mx-auto px-6 py-16 text-center">
-          <div className="bg-brand/5 rounded-3xl p-8 border border-brand/10">
-            <p className="text-4xl mb-4">💙</p>
-            <h2 className="text-2xl font-bold mb-4">Built by a grandson, for his grandfather.</h2>
-            <p className="text-lg text-navy/70 leading-relaxed">
-              Keepsake was born from a simple wish — to help a grandfather feel seen, heard, and
-              connected, even on the harder days. Alzheimer's may change memory, but it doesn't
-              change the capacity for joy, warmth, and love. Every feature in Keepsake was built
-              with that belief at its core.
-            </p>
-          </div>
-        </section>
-
-        {/* ── Feature highlights ────────────────────────────────────────── */}
-        <section className="bg-white/60 py-16">
-          <div className="max-w-4xl mx-auto px-6">
-            <h2 className="text-3xl font-bold text-center mb-10">Designed for dignity</h2>
-            <div className="grid sm:grid-cols-2 gap-5">
-              {[
-                { icon: '🧠', title: 'Evidence-based approach', body: 'Validation therapy, errorless learning, and spaced retrieval — built into every conversation.' },
-                { icon: '🔒', title: 'Fully private', body: 'No accounts, no cloud database. Everything stays in your own browser. Your key, your data.' },
-                { icon: '🎵', title: 'Music moments', body: 'Embed favourite YouTube songs directly into visits — music is one of the most powerful memory anchors.' },
-                { icon: '📈', title: 'Mood tracking', body: 'Visualise mood and engagement trends over time to spot good days and share progress with healthcare providers.' },
-                { icon: '🔥', title: 'Streak rewards showing up', body: 'The streak celebrates visiting every day — never whether they remembered correctly. No shame, ever.' },
-                { icon: '🆓', title: 'Free without a key', body: 'Lane works with warm scripted conversations at no cost. Add your own Anthropic key for personalised AI.' },
-              ].map(f => (
-                <div key={f.title} className="flex gap-4 bg-white rounded-2xl p-5 shadow-sm border border-black/5">
-                  <span className="text-2xl mt-0.5">{f.icon}</span>
-                  <div>
-                    <h4 className="font-semibold mb-1">{f.title}</h4>
-                    <p className="text-navy/70 text-base leading-relaxed">{f.body}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ── Final CTA ─────────────────────────────────────────────────── */}
-        {!hasProfiles && (
-          <section className="py-16 text-center px-6">
-            <h2 className="text-3xl font-bold mb-4">Ready to begin?</h2>
-            <p className="text-lg text-navy/70 mb-8">
-              Set up takes about 5 minutes. No account, no payment required.
-            </p>
-            <button onClick={() => navigate('/onboarding')} className="btn-primary text-xl px-10 py-4">
-              Create your first profile
-            </button>
-          </section>
         )}
-      </main>
 
-      {/* ── Footer ────────────────────────────────────────────────────────── */}
-      <footer className="border-t border-navy/10 py-8 px-6 text-center text-navy/50 text-sm">
-        <p className="max-w-2xl mx-auto">
-          <strong>Keepsake is a wellness companion, not a medical device.</strong>{' '}
-          Always consult qualified healthcare providers regarding Alzheimer's care and treatment.
-          Keepsake does not store any data outside your own device.
+        <div className="bg-white rounded-2xl p-5 shadow-sm">
+          <p className="text-xs font-bold text-navy/40 uppercase tracking-widest mb-4">Designed for dignity</p>
+          <div className="space-y-3">
+            {[
+              { icon: '🧠', label: 'Evidence-based conversations' },
+              { icon: '🔒', label: 'All data stays on your device' },
+              { icon: '🔥', label: 'Streaks reward showing up, not memory' },
+            ].map(f => (
+              <div key={f.label} className="flex items-center gap-3">
+                <span className="text-2xl">{f.icon}</span>
+                <span className="text-navy/70 font-medium">{f.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <p className="text-center text-navy/35 text-xs pb-2 leading-relaxed px-2">
+          Keepsake is a wellness companion, not a medical device.
+          Your key, your data — you are never billed for others' use.
         </p>
-        <p className="mt-3">
-          Made with love. Bring Your Own Key —{' '}
-          <span className="text-brand font-medium">you are never billed for others' use.</span>
-        </p>
-      </footer>
+      </div>
+
+      <BottomNav profileId={profiles[0]?.id} />
     </div>
   )
 }

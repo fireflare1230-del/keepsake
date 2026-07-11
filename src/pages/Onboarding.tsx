@@ -56,6 +56,7 @@ export default function Onboarding() {
       lifeStory:            '',
       topicsToAvoid:        [],
       gentleFactsToReinforce: [],
+      srtTargets:           [],
       createdAt:            new Date().toISOString(),
       streak:               0,
     }

@@ -15,6 +15,7 @@ module.exports = {
       },
       fontFamily: {
         sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        chat: ['Nunito', 'ui-sans-serif', 'system-ui', 'sans-serif'],
       },
       minHeight: {
         btn: '48px',

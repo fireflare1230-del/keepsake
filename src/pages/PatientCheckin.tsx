@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import MoodPicker from '../components/MoodPicker'
+import BottomNav from '../components/BottomNav'
 import {
   getProfile, saveProfile, saveVisit, updateStreak,
-  generateId, getSettings,
+  generateId, getSettings, getDueSRTTarget, updateSRTTarget,
 } from '../lib/storage'
 import {
   buildGreeting, getLaneOpening, getLaneReply,
@@ -11,7 +12,7 @@ import {
   speakText, stopSpeaking, getYouTubeVideoId,
 } from '../lib/ai'
 import { getThemeForDate } from '../lib/themes'
-import type { PatientProfile, Visit, DisplayMessage, YouTubeLink } from '../types'
+import type { PatientProfile, Visit, DisplayMessage, YouTubeLink, SRTTarget } from '../types'
 import type { LaneResponse } from '../lib/ai'
 
 // ─── Steps ───────────────────────────────────────────────────────────────────
@@ -35,32 +36,41 @@ function getSpeechCtor(): SpeechRecognitionCtor | undefined {
   return ctor as SpeechRecognitionCtor | undefined;
 }
 
-// ─── Thinking indicator ───────────────────────────────────────────────────────
+// ─── Thinking indicator — shown inside a Lane bubble shape ───────────────────
 function Thinking() {
   return (
-    <div className="flex items-center gap-1 px-4 py-3">
-      {[0, 1, 2].map(i => (
-        <div
-          key={i}
-          className="w-2.5 h-2.5 rounded-full bg-brand thinking-dot"
-          style={{ animationDelay: `${i * 0.2}s` }}
-        />
-      ))}
+    <div className="flex gap-3 items-end bubble-pop max-w-[85%]">
+      <div className="w-10 h-10 rounded-full bg-brand flex items-center justify-center text-white font-bold text-lg shrink-0">
+        L
+      </div>
+      <div className="bg-[#EAF2F6] rounded-[20px] rounded-bl-[6px] px-5 py-4
+                      shadow-[0_4px_16px_rgba(0,0,0,0.06)]">
+        <div className="flex items-center gap-1.5">
+          {[0, 1, 2].map(i => (
+            <div
+              key={i}
+              className="w-2.5 h-2.5 rounded-full bg-brand/60 thinking-dot"
+              style={{ animationDelay: `${i * 0.2}s` }}
+            />
+          ))}
+        </div>
+      </div>
     </div>
   )
 }
 
 function LaneBubble({ message, onSpeak }: { message: string; onSpeak: () => void }) {
   return (
-    <div className="flex gap-3 items-start fade-up max-w-[85%]">
-      <div className="w-10 h-10 rounded-full bg-brand flex items-center justify-center text-white font-bold text-lg shrink-0 mt-1">
+    <div className="flex gap-3 items-end bubble-pop max-w-[85%]">
+      <div className="w-10 h-10 rounded-full bg-brand flex items-center justify-center text-white font-bold text-lg shrink-0">
         L
       </div>
-      <div className="bg-white rounded-2xl rounded-tl-sm shadow-sm border border-black/5 px-5 py-4">
-        <p className="text-lg leading-relaxed text-navy">{message}</p>
+      <div className="bg-[#EAF2F6] rounded-[20px] rounded-bl-[6px]
+                      shadow-[0_4px_16px_rgba(0,0,0,0.06)] px-5 py-4 font-chat">
+        <p className="text-[18px] leading-relaxed text-navy">{message}</p>
         <button
           onClick={onSpeak}
-          className="mt-2 text-sm text-brand/70 hover:text-brand transition-colors flex items-center gap-1"
+          className="mt-2 text-sm text-brand/60 hover:text-brand transition-colors flex items-center gap-1"
           aria-label="Read aloud"
         >
           🔊 Read aloud
@@ -72,10 +82,11 @@ function LaneBubble({ message, onSpeak }: { message: string; onSpeak: () => void
 
 function PatientBubble({ message, name }: { message: string; name: string }) {
   return (
-    <div className="flex gap-3 items-start justify-end fade-up">
-      <div className="bg-primary/10 rounded-2xl rounded-tr-sm px-5 py-4 max-w-[80%]">
+    <div className="flex gap-3 items-end justify-end bubble-pop">
+      <div className="bg-[#FDF1E2] rounded-[20px] rounded-br-[6px] px-5 py-4 max-w-[80%]
+                      shadow-[0_4px_16px_rgba(0,0,0,0.06)] font-chat">
         <p className="text-sm font-semibold text-primary mb-1">{name}</p>
-        <p className="text-lg leading-relaxed text-navy">{message}</p>
+        <p className="text-[18px] leading-relaxed text-navy">{message}</p>
       </div>
     </div>
   )
@@ -116,6 +127,8 @@ function PatientCheckinContent({ profile }: { profile: PatientProfile }) {
   const [isListening,    setIsListening]   = useState(false)
   const [selectedMusic,  setSelectedMusic] = useState<YouTubeLink | null>(null)
   const [updatedProfile, setUpdatedProfile] = useState<PatientProfile | null>(null)
+  // SRT target due for this visit — resolved once, before conversation starts
+  const srtTarget = useRef<SRTTarget | null>(getDueSRTTarget(profile))
 
   const hasSpeech = useRef(!!(getSpeechCtor()))
 
@@ -155,7 +168,7 @@ function PatientCheckinContent({ profile }: { profile: PatientProfile }) {
     try {
       let resp: LaneResponse
       if (settings.apiKey) {
-        resp = await getLaneOpening(profile, theme.name, settings.apiKey, settings.model)
+        resp = await getLaneOpening(profile, theme.name, settings.apiKey, settings.model, srtTarget.current)
       } else {
         resp = getFallbackResponse(theme.id, 0)
       }
@@ -205,7 +218,7 @@ function PatientCheckinContent({ profile }: { profile: PatientProfile }) {
       try {
         let resp: LaneResponse
         if (settings.apiKey) {
-          resp = await getLaneReply(updatedTranscript, profile, theme.name, settings.apiKey, settings.model)
+          resp = await getLaneReply(updatedTranscript, profile, theme.name, settings.apiKey, settings.model, srtTarget.current)
         } else {
           resp = getFallbackResponse(theme.id, nextTurn)
         }
@@ -291,10 +304,16 @@ function PatientCheckinContent({ profile }: { profile: PatientProfile }) {
 
     speak(`Wonderful, ${profile.preferredName || profile.name}! What a beautiful visit today. Come back tomorrow — I'll be here waiting for you.`)
 
-    // Background: generate caretaker summary (non-blocking)
+    // Background: generate caretaker summary and update SRT interval (non-blocking)
     if (settings.apiKey) {
-      generateVisitSummary(transcript, profile, settings.apiKey, settings.model)
-        .then(summary => saveVisit({ ...visit, summary, engagement: summary.engagement }))
+      generateVisitSummary(transcript, profile, settings.apiKey, settings.model, srtTarget.current)
+        .then(summary => {
+          saveVisit({ ...visit, summary, engagement: summary.engagement })
+          // Advance or regress the SRT target interval based on recall result
+          if (srtTarget.current && summary.srtResult && summary.srtResult !== 'not-tested') {
+            updateSRTTarget(profile, srtTarget.current.id, summary.srtResult)
+          }
+        })
         .catch(() => { /* summary is optional */ })
     }
   }
@@ -326,29 +345,154 @@ function PatientCheckinContent({ profile }: { profile: PatientProfile }) {
 
   const name = profile.preferredName || profile.name
 
+  // ── Time-of-day greeting ─────────────────────────────────────────────────
+  const hour         = new Date().getHours()
+  const timeOfDay    = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening'
+  const timeGreeting = `Good ${timeOfDay}`
+
   // ── Render ─────────────────────────────────────────────────────────────────
+
+  // ── Home screen (greeting step) ───────────────────────────────────────────
+  if (step === 'greeting') {
+    return (
+      <div className="min-h-screen bg-[#F5F5F7] flex flex-col pb-16">
+        {/* Header */}
+        <header className="bg-white px-5 py-4 flex items-center justify-between shadow-sm">
+          <span className="font-bold text-navy text-xl tracking-tight">Keepsake</span>
+          <button
+            onClick={() => navigate('/')}
+            className="text-sm text-navy/50 font-medium hover:text-navy transition-colors"
+          >
+            Help
+          </button>
+        </header>
+
+        <div className="flex-1 overflow-y-auto px-4 py-5 max-w-sm mx-auto w-full space-y-4">
+
+          {/* Greeting card */}
+          <div className="bg-white rounded-3xl p-6 shadow-sm">
+            <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-amber-200 to-orange-300
+                            mx-auto mb-5 flex items-center justify-center text-5xl shadow-sm">
+              🌿
+            </div>
+            <h1 className="text-3xl font-extrabold text-navy leading-tight">
+              {timeGreeting},<br />{name}
+            </h1>
+            <p className="text-navy/55 text-lg mt-2">How are you feeling today?</p>
+          </div>
+
+          {/* 2×2 Mood grid */}
+          <MoodPicker value={mood} onChange={setMood} />
+
+          {/* Start CTA */}
+          <button
+            disabled={mood === null}
+            onClick={() => {
+              if (mood === null) return
+              const moodLabels: Record<number,string> = { 1:'Worried 😟', 2:'Tired 😴', 4:'Calm 😌', 5:'Happy 😊' }
+              addMsg('patient', moodLabels[mood] ?? `Mood ${mood}`)
+              startConversation()
+            }}
+            className="btn-primary w-full text-xl py-4 rounded-2xl disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Start Daily Check-In
+          </button>
+
+          {/* Today's Tip */}
+          <div className="bg-white rounded-2xl p-5 shadow-sm">
+            <p className="text-xs font-bold text-primary/80 uppercase tracking-widest mb-2">Today's Tip</p>
+            <p className="text-navy/70 leading-relaxed text-base">
+              {theme.description
+                ? theme.description
+                : 'Drinking a glass of water can help you feel more alert and focused throughout the morning.'}
+            </p>
+          </div>
+        </div>
+
+        <BottomNav profileId={profile.id} />
+      </div>
+    )
+  }
+
+  // ── Celebration screen ─────────────────────────────────────────────────────
+  if (step === 'celebration') {
+    const streak    = updatedProfile?.streak ?? 0
+    const dotCount  = Math.min(7, Math.max(streak, 5))
+
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50
+                      flex flex-col items-center justify-center px-6 py-12">
+        <div className="bg-white/85 backdrop-blur-sm rounded-3xl p-10 text-center max-w-sm w-full shadow-lg">
+
+          <div className="text-6xl mb-3 bounce-in">🌟</div>
+          <h1 className="text-4xl font-extrabold text-navy mb-3">Great job!</h1>
+          <p className="text-lg text-navy/60 leading-relaxed mb-8">
+            You've successfully completed your {timeOfDay} check-in.
+            It's a wonderful start to your day, {name}.
+          </p>
+
+          {streak > 0 && (
+            <div className="mb-8">
+              <div className="flex items-center justify-center gap-3 mb-2">
+                <span className="text-5xl">🔥</span>
+                <span className="text-6xl font-black text-primary leading-none">{streak}</span>
+              </div>
+              <p className="text-xs font-bold text-navy/45 uppercase tracking-widest mb-4">
+                Days in a row
+              </p>
+              <div className="flex gap-2 justify-center">
+                {[...Array(dotCount)].map((_, i) => (
+                  <div
+                    key={i}
+                    className={`w-3 h-3 rounded-full transition-all ${
+                      i < streak ? 'bg-primary' : 'bg-navy/20'
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          <button
+            onClick={() => { stopSpeaking(); navigate('/') }}
+            className="btn-primary w-full text-xl py-4 mb-4 rounded-2xl"
+          >
+            See you tomorrow
+          </button>
+          <button
+            onClick={() => { stopSpeaking(); navigate('/caretaker') }}
+            className="text-brand font-semibold text-base hover:underline"
+          >
+            Review today's highlights
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Conversation / Music / Family — chat interface ─────────────────────────
   return (
-    <div className="min-h-screen bg-cream flex flex-col">
+    <div className="min-h-screen bg-[#F5F5F7] flex flex-col">
 
       {/* Top bar */}
-      <header className="sticky top-0 z-10 bg-cream/90 backdrop-blur-sm border-b border-navy/10 px-4 py-3">
+      <header className="sticky top-0 z-10 bg-white shadow-sm px-4 py-3">
         <div className="max-w-2xl mx-auto">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
-              <span className="font-bold text-brand text-lg">Keepsake</span>
-              <span className="text-navy/40 text-sm">·</span>
-              <span className="text-navy/60 text-sm">{theme.icon} {theme.name}</span>
+              <span className="font-bold text-navy text-lg">Keepsake</span>
+              <span className="text-navy/30 text-sm">·</span>
+              <span className="text-navy/55 text-sm">{theme.icon} {theme.name}</span>
             </div>
             <button
               onClick={() => { stopSpeaking(); navigate('/') }}
-              className="text-navy/40 hover:text-navy transition-colors text-sm"
+              className="text-navy/40 hover:text-navy transition-colors text-sm font-medium"
             >
               End visit
             </button>
           </div>
           <div className="w-full bg-navy/10 rounded-full h-1.5">
             <div
-              className="bg-brand h-1.5 rounded-full transition-all duration-700"
+              className="bg-primary h-1.5 rounded-full transition-all duration-700"
               style={{ width: `${pct}%` }}
             />
           </div>
@@ -375,33 +519,16 @@ function PatientCheckinContent({ profile }: { profile: PatientProfile }) {
           </div>
         )}
 
-        {/* Mood picker — shown after greeting step */}
-        {step === 'mood' && (
-          <div className="card text-center fade-up">
-            <p className="text-xl font-semibold mb-6">How are you feeling right now, {name}?</p>
-            <MoodPicker
-              value={mood}
-              onChange={m => {
-                setMood(m)
-                const labels = ['Not great','A little low','Okay','Pretty good','Wonderful!']
-                const emojis = ['😔','😕','😊','😄','😁']
-                addMsg('patient', `${emojis[m-1]} — ${labels[m-1]}`)
-                setTimeout(startConversation, 500)
-              }}
-            />
-          </div>
-        )}
-
         {/* Music moment */}
         {step === 'music' && (
-          <div className="card text-center fade-up">
-            <p className="text-2xl mb-2">🎵</p>
+          <div className="bg-white rounded-3xl p-6 shadow-sm text-center fade-up">
+            <p className="text-3xl mb-2">🎵</p>
             <h3 className="text-xl font-bold mb-2">Music moment</h3>
             {selectedMusic ? (
               <>
                 <p className="text-navy/70 mb-3">Here's one of your favourite songs, {name}:</p>
                 <p className="font-semibold text-lg mb-4">{selectedMusic.title}</p>
-                <div className="relative pb-[56.25%] rounded-xl overflow-hidden bg-navy/5">
+                <div className="relative pb-[56.25%] rounded-2xl overflow-hidden bg-navy/5">
                   {(() => {
                     const vid = getYouTubeVideoId(selectedMusic.url)
                     return vid ? (
@@ -426,60 +553,27 @@ function PatientCheckinContent({ profile }: { profile: PatientProfile }) {
                 <p className="text-sm text-navy/40">A caretaker can add YouTube links in the Profile editor.</p>
               </div>
             )}
-            <button onClick={startFamilyMoment} className="btn-primary mt-6 w-full">
+            <button onClick={startFamilyMoment} className="btn-primary mt-6 w-full rounded-2xl">
               Continue →
-            </button>
-          </div>
-        )}
-
-        {/* Celebration */}
-        {step === 'celebration' && (
-          <div className="card text-center fade-up py-10">
-            <div className="text-7xl mb-4 bounce-in">🌟</div>
-            <h2 className="text-3xl font-bold mb-3">What a wonderful visit!</h2>
-            <p className="text-lg text-navy/70 mb-8">
-              Thank you for spending this time with me, {name}. You make every visit special.
-            </p>
-
-            {(updatedProfile?.streak ?? 0) > 0 && (
-              <div className="bg-primary/10 rounded-2xl px-6 py-4 mb-8 inline-block">
-                <p className="text-3xl font-extrabold text-primary">
-                  🔥 {updatedProfile!.streak}-day streak!
-                </p>
-                <p className="text-navy/60 mt-1">
-                  {updatedProfile!.streak === 1
-                    ? 'Your first visit — welcome!'
-                    : `You've shown up ${updatedProfile!.streak} days in a row. That's beautiful.`}
-                </p>
-              </div>
-            )}
-
-            <p className="text-navy/60 mb-8 text-lg">
-              Come back tomorrow — Lane will be here, ready for another lovely conversation.
-            </p>
-            <button
-              onClick={() => { stopSpeaking(); navigate('/') }}
-              className="btn-primary text-xl px-10 py-4"
-            >
-              Finish visit
             </button>
           </div>
         )}
       </div>
 
       {/* Input area */}
-      {laneResp && (step === 'greeting' || step === 'conversation' || step === 'family') && (
-        <div className="sticky bottom-0 bg-cream/95 backdrop-blur-sm border-t border-navy/10 px-4 pt-4 pb-6 max-w-2xl w-full mx-auto">
+      {laneResp && (step === 'conversation' || step === 'family') && (
+        <div className="sticky bottom-0 bg-white border-t border-black/8 px-4 pt-4 pb-5 max-w-2xl w-full mx-auto">
 
-          {/* Tap-able suggestion buttons */}
+          {/* Suggestion chips */}
           <div className="flex flex-wrap gap-2 mb-3">
             {laneResp.suggestions.map((s, i) => (
               <button
                 key={i}
                 onClick={() => sendMessage(s, messages, step, convTurn)}
-                className="bg-white border-2 border-brand/20 hover:border-brand hover:bg-brand/5
-                           rounded-xl px-4 py-2 text-base font-medium text-navy
-                           transition-all min-h-[48px] cursor-pointer active:scale-95"
+                className="bg-[#EAF2F6] border-2 border-brand/20 hover:border-brand hover:bg-[#d6eaf4]
+                           rounded-full px-5 py-2.5 text-base font-chat font-semibold text-navy
+                           transition-all duration-150 min-h-[48px] cursor-pointer
+                           active:scale-[0.96] active:bg-[#c8e0ee] shadow-sm"
               >
                 {s}
               </button>
@@ -489,7 +583,7 @@ function PatientCheckinContent({ profile }: { profile: PatientProfile }) {
           {/* Text + mic + send */}
           <div className="flex gap-2">
             <input
-              className="input flex-1"
+              className="input flex-1 rounded-2xl"
               placeholder="Or type your own response…"
               value={inputText}
               onChange={e => setInputText(e.target.value)}
@@ -503,10 +597,10 @@ function PatientCheckinContent({ profile }: { profile: PatientProfile }) {
                 onClick={isListening ? () => setIsListening(false) : startListening}
                 aria-label={isListening ? 'Stop listening' : 'Speak your answer'}
                 className={[
-                  'min-h-[48px] min-w-[48px] rounded-xl border-2 flex items-center justify-center text-xl transition-all',
+                  'min-h-[48px] min-w-[48px] rounded-2xl border-2 flex items-center justify-center text-xl transition-all',
                   isListening
                     ? 'bg-danger/10 border-danger text-danger animate-pulse'
-                    : 'bg-white border-navy/20 hover:border-brand',
+                    : 'bg-cream border-navy/20 hover:border-brand',
                 ].join(' ')}
               >
                 🎤
@@ -516,7 +610,7 @@ function PatientCheckinContent({ profile }: { profile: PatientProfile }) {
               onClick={() => inputText.trim() && sendMessage(inputText, messages, step, convTurn)}
               disabled={!inputText.trim()}
               aria-label="Send"
-              className="btn-primary min-w-[48px] px-4"
+              className="btn-primary min-w-[48px] px-4 rounded-2xl"
             >
               →
             </button>

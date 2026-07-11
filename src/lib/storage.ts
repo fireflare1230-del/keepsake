@@ -1,7 +1,7 @@
 // ─── localStorage helpers ─────────────────────────────────────────────────────
 // Everything persists in the browser. No server, no accounts.
 
-import type { PatientProfile, Visit, AppSettings } from '../types';
+import type { PatientProfile, Visit, AppSettings, SRTTarget } from '../types';
 
 const PROFILES_KEY = 'ks_profiles';
 const VISITS_KEY   = 'ks_visits';
@@ -19,7 +19,9 @@ export function generateId(): string {
 export function getProfiles(): PatientProfile[] {
   try {
     const raw = localStorage.getItem(PROFILES_KEY);
-    return raw ? (JSON.parse(raw) as PatientProfile[]) : [];
+    const profiles = raw ? (JSON.parse(raw) as PatientProfile[]) : [];
+    // Backfill srtTargets for profiles created before v2
+    return profiles.map(p => (p.srtTargets ? p : { ...p, srtTargets: [] }));
   } catch {
     return [];
   }
@@ -96,10 +98,10 @@ export function saveVisit(visit: Visit): void {
 export function getSettings(): AppSettings {
   try {
     const raw = localStorage.getItem(SETTINGS_KEY);
-    const defaults: AppSettings = { model: 'claude-haiku-4-5-20251001', readAloud: true };
+    const defaults: AppSettings = { model: 'claude-haiku-4-5-20251001', readAloud: true, voicePreferMale: false, voiceRate: 0.85 };
     return raw ? { ...defaults, ...(JSON.parse(raw) as Partial<AppSettings>) } : defaults;
   } catch {
-    return { model: 'claude-haiku-4-5-20251001', readAloud: true };
+    return { model: 'claude-haiku-4-5-20251001', readAloud: true, voicePreferMale: false, voiceRate: 0.85 };
   }
 }
 
@@ -125,4 +127,59 @@ export function checkPin(attempt: string): boolean {
   const { caretakerPin } = getSettings();
   if (!caretakerPin) return true;       // no PIN set → always pass
   return caretakerPin === attempt;
+}
+
+// ─── SRT (Spaced Retrieval Training) ─────────────────────────────────────────
+// Expanding interval scale in minutes — mirrors clinical SRT literature.
+// idx: 0=1min  1=2min  2=4min  3=8min  4=1day  5=2days  6=1week
+export const SRT_INTERVALS_MIN = [1, 2, 4, 8, 1440, 2880, 10080] as const;
+
+export function getDueSRTTarget(profile: PatientProfile): SRTTarget | null {
+  const active = (profile.srtTargets ?? []).filter(t => !t.learnedAt);
+  if (active.length === 0) return null;
+
+  const now = Date.now();
+  const due = active.filter(t => {
+    if (!t.lastTestedAt) return true;  // never tested → always due
+    const elapsedMin = (now - new Date(t.lastTestedAt).getTime()) / 60_000;
+    const threshold  = SRT_INTERVALS_MIN[Math.min(t.currentIntervalIdx, SRT_INTERVALS_MIN.length - 1)];
+    return elapsedMin >= threshold;
+  });
+
+  if (due.length === 0) return null;
+  // Pick the one lowest on the interval scale (needs the most practice)
+  return due.sort((a, b) => a.currentIntervalIdx - b.currentIntervalIdx)[0];
+}
+
+export function updateSRTTarget(
+  profile: PatientProfile,
+  targetId: string,
+  result: 'correct' | 'prompted',
+): PatientProfile {
+  const now = new Date().toISOString();
+  const srtTargets = (profile.srtTargets ?? []).map((t): SRTTarget => {
+    if (t.id !== targetId) return t;
+    if (result === 'correct') {
+      const consecutive = t.consecutiveCorrect + 1;
+      const learned     = consecutive >= 3;
+      return {
+        ...t,
+        lastTestedAt: now,
+        lastResult: 'correct',
+        consecutiveCorrect: consecutive,
+        currentIntervalIdx: Math.min(t.currentIntervalIdx + 1, SRT_INTERVALS_MIN.length - 1),
+        ...(learned ? { learnedAt: now } : {}),
+      };
+    }
+    return {
+      ...t,
+      lastTestedAt: now,
+      lastResult: 'prompted',
+      consecutiveCorrect: 0,
+      currentIntervalIdx: Math.max(t.currentIntervalIdx - 1, 0),
+    };
+  });
+  const updated = { ...profile, srtTargets };
+  saveProfile(updated);
+  return updated;
 }

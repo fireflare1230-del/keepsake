@@ -113,6 +113,7 @@ export default function ProfileEditor() {
       lifeStory:              lifeStory.trim(),
       topicsToAvoid,
       gentleFactsToReinforce: factsToReinforce,
+      srtTargets:             existing?.srtTargets ?? [],
       createdAt:              existing?.createdAt ?? now,
       lastVisitAt:            existing?.lastVisitAt,
       streak:                 existing?.streak ?? 0,

@@ -5,8 +5,9 @@
 // When no key is available the app falls back to warm scripted exchanges so
 // anyone can use Keepsake for free.
 
-import type { PatientProfile, DisplayMessage, VisitSummary } from '../types';
+import type { PatientProfile, DisplayMessage, VisitSummary, SRTTarget } from '../types';
 import { FALLBACK_EXCHANGES } from './themes';
+import { getSettings } from './storage';
 
 const API_URL = 'https://api.anthropic.com/v1/messages';
 
@@ -19,13 +20,30 @@ export interface LaneResponse {
 
 // ─── System prompt ────────────────────────────────────────────────────────────
 
-function buildSystemPrompt(profile: PatientProfile, themeName: string): string {
+function buildSystemPrompt(
+  profile: PatientProfile,
+  themeName: string,
+  srtTarget?: SRTTarget | null,
+): string {
   const name    = profile.preferredName || profile.name;
   const family  = profile.familyPeople.map(p =>
     `${p.name} (${p.relationship})${p.memory ? ' — ' + p.memory : ''}`,
   ).join('; ') || 'none listed';
   const facts   = profile.gentleFactsToReinforce.join('; ') || 'none provided';
   const avoid   = profile.topicsToAvoid.join(', ')           || 'none listed';
+
+  const srtSection = srtTarget ? `
+
+═══ SRT INSTRUCTION FOR THIS VISIT ═══
+Target: "${srtTarget.prompt}" → correct answer: "${srtTarget.answer}"
+
+- Weave ONE confirmation-style ask of this early in the visit, stated warmly and inviting agreement — NOT a cold quiz. Example: "I just want to make sure I've got this right — ${srtTarget.answer} is ${srtTarget.prompt}, isn't it?"
+- Later in the SAME visit, after other conversation has happened, ask once more in open form: "Earlier we were talking — can you remind me of ${srtTarget.prompt}?"
+- If correct: celebrate genuinely like an adult achievement, not a child's. Move on naturally.
+- If incorrect or unsure: immediately and warmly supply the answer. Ask them to repeat it once, then move on. NEVER say "no" or "that's wrong." Frame it as "That's alright — it's ${srtTarget.answer}. ${srtTarget.answer}. Can you say that with me?"
+- This is the ONLY closed-recall question this visit. Every other question must stay open-ended with no wrong answer.
+
+When generating your post-visit summary, note whether this target was: 'correct' (recalled without prompting), 'prompted' (answer needed to be supplied), or 'not-tested'.` : '';
 
   return `You are Lane, a warm and gentle AI companion for ${name}, who lives with Alzheimer's disease. You are having a friendly daily check-in conversation. Today's theme is: ${themeName}.
 
@@ -39,7 +57,7 @@ function buildSystemPrompt(profile: PatientProfile, themeName: string): string {
 
 4. FAVOR EARLY-LIFE MEMORIES: Focus on childhood, young adult years, and long-ago moments, which are better preserved with Alzheimer's.
 
-5. SENSORY ANCHORS: Weave senses into your questions. "Did it smell like fresh bread?" "What did that taste like?" "I can almost hear the music…"
+5. SENSORY ANCHORS: For reminiscence questions, anchor in sensation and feeling — "what did it smell like?", "how did that make you feel?" — rather than bare fact-recall questions like "where did you grow up?" which risk embarrassment if the patient draws a blank.
 
 6. EASY CHOICES: Offer yes/no or either/or options — never open-ended questions requiring unaided recall. "Was it more sunny or cloudy?" not "What was the weather like?"
 
@@ -50,7 +68,7 @@ function buildSystemPrompt(profile: PatientProfile, themeName: string): string {
 9. SHORT REPLIES: 1–3 short sentences maximum. Warm, slow, never rushed. No long lists. No clinical language.
 
 10. TOPICS TO AVOID: ${avoid}
-
+${srtSection}
 ═══ PATIENT PROFILE ═══
 Name: ${profile.name} — prefers to be called: ${name}
 Birth year: ${profile.birthYear ?? 'unknown'}
@@ -61,11 +79,15 @@ Life story: ${profile.lifeStory || 'none provided'}
 
 ═══ RESPONSE FORMAT — REQUIRED ═══
 You MUST respond ONLY with valid JSON in this exact shape — no markdown, no extra text:
-{"message":"Your warm, short message here.","suggestions":["Option 1","Option 2","Option 3","Tell me more"]}
+{"message":"Your warm, short message here.","suggestions":["Option A","Option B","Option C","Could you say that again?"]}
 
-The "suggestions" array: 2–4 short, tap-able responses that fit naturally.
-Always include at least one gentle open option like "Tell me more" or "I'm not sure."
-Keep each suggestion under 8 words.
+The "suggestions" array — this is critically important:
+- Write 3–4 SHORT phrases the PATIENT would naturally say in response to YOUR message.
+- Each suggestion must be a DIRECT REACTION to what you just said — not a generic filler phrase.
+- Match the emotion and topic: if you asked about a garden, suggestions might be "I loved the roses", "It was very peaceful", "We grew tomatoes too", "Say that again?"
+- NEVER include generic phrases like "Tell me more", "That sounds lovely", "I'm not sure", or "Yes!" — these are meaningless to the patient.
+- Always include ONE option for when they didn't follow — e.g. "Could you say that again?", "I didn't quite catch that", or "Can you rephrase that?"
+- Keep every suggestion under 8 words. Write them as if the patient is speaking.
 
 Remember: you are a companion, not a therapist. Be joyful, patient, and deeply human.`;
 }
@@ -108,12 +130,12 @@ function parseLaneResponse(raw: string): LaneResponse {
     const parsed = JSON.parse(cleaned) as { message?: string; suggestions?: string[] };
     return {
       message: parsed.message ?? raw.slice(0, 300),
-      suggestions: Array.isArray(parsed.suggestions) ? parsed.suggestions : ['Tell me more', 'That sounds lovely', "I'm not sure"],
+      suggestions: Array.isArray(parsed.suggestions) ? parsed.suggestions : ['Yes, I remember that', 'Could you say that again?', "I think so", "That's nice"],
     };
   } catch {
     return {
       message: raw.slice(0, 300),
-      suggestions: ["Tell me more", "That sounds lovely", "I'm not sure", "Yes!"],
+      suggestions: ['Yes, that sounds right', "Could you rephrase that?", "I'm not sure", "Please continue"],
     };
   }
 }
@@ -125,8 +147,9 @@ export async function getLaneOpening(
   themeName: string,
   apiKey: string,
   model: string,
+  srtTarget?: SRTTarget | null,
 ): Promise<LaneResponse> {
-  const system = buildSystemPrompt(profile, themeName);
+  const system = buildSystemPrompt(profile, themeName, srtTarget);
   // Anthropic API requires messages to start with 'user'; we use a gentle kick-off
   const raw = await callAnthropic(
     [{ role: 'user', content: 'Please begin our visit with your themed opening message.' }],
@@ -149,8 +172,9 @@ export async function getLaneReply(
   themeName: string,
   apiKey: string,
   model: string,
+  srtTarget?: SRTTarget | null,
 ): Promise<LaneResponse> {
-  const system = buildSystemPrompt(profile, themeName);
+  const system = buildSystemPrompt(profile, themeName, srtTarget);
 
   // Build alternating messages starting from the FIRST patient message
   const apiMessages: { role: 'user' | 'assistant'; content: string }[] = [];
@@ -187,18 +211,23 @@ export async function generateVisitSummary(
   profile: PatientProfile,
   apiKey: string,
   model: string,
+  srtTarget?: SRTTarget | null,
 ): Promise<VisitSummary> {
   const name = profile.preferredName || profile.name;
   const text = transcript
     .map(m => `${m.role === 'lane' ? 'Lane' : name}: ${m.content}`)
     .join('\n');
 
+  const srtInstruction = srtTarget
+    ? `\nAlso, an SRT memory target was being practiced this visit: prompt="${srtTarget.prompt}", answer="${srtTarget.answer}". Classify the result as "srtResult": one of "correct" (patient recalled without prompting), "prompted" (answer had to be supplied), or "not-tested" (never came up). Include this field in your JSON.`
+    : '';
+
   const system = `You are a compassionate caretaker assistant. Analyze this visit transcript and return ONLY valid JSON:
-{"summary":"2–3 sentence warm summary for the caretaker","engagement":3,"highlights":["highlight 1"],"flags":["any concern, or leave empty"],"encouragement":"one warm encouraging sentence for the caretaker"}
+{"summary":"2–3 sentence warm summary for the caretaker","engagement":3,"highlights":["highlight 1"],"flags":["any concern, or leave empty"],"encouragement":"one warm encouraging sentence for the caretaker","srtResult":"not-tested"}
 
 Engagement scale: 1=very low, 2=low, 3=moderate, 4=good, 5=excellent.
 Flags: note confusion, distress, or unusual moments. Leave the array empty if none.
-Be warm, brief, and professional. No markdown.`;
+Be warm, brief, and professional. No markdown.${srtInstruction}`;
 
   try {
     const raw = await callAnthropic(
@@ -218,6 +247,7 @@ Be warm, brief, and professional. No markdown.`;
       highlights: [],
       flags: [],
       encouragement: 'You are doing a wonderful job caring for your loved one.',
+      srtResult: 'not-tested',
     };
   }
 }
@@ -249,16 +279,99 @@ export function buildGreeting(profile: PatientProfile): LaneResponse {
   };
 }
 
+// ─── Voice selection ──────────────────────────────────────────────────────────
+// Browsers load voices asynchronously. We cache the best match and refresh when
+// the voice list changes or when the gender preference changes in settings.
+
+let _voiceCache: SpeechSynthesisVoice | null = null;
+let _voicePrefMale: boolean | null = null;
+
+const QUALITY_TERMS  = ['neural', 'natural', 'enhanced', 'premium', 'google'];
+const MALE_TERMS     = ['guy', 'david', 'mark', 'james', 'fred', 'daniel', 'ryan', 'eric', 'aaron', 'tom'];
+const FEMALE_TERMS   = ['samantha', 'victoria', 'karen', 'kate', 'lisa', 'zira', 'eva', 'susan', 'alex', 'siri'];
+
+function scoreVoice(v: SpeechSynthesisVoice, preferMale: boolean): number {
+  const n = v.name.toLowerCase();
+  let s = 0;
+  if (QUALITY_TERMS.some(t => n.includes(t))) s += 10;
+  if (preferMale  && MALE_TERMS.some(t => n.includes(t)))   s += 5;
+  if (!preferMale && FEMALE_TERMS.some(t => n.includes(t))) s += 5;
+  if (v.lang === 'en-US') s += 2;
+  return s;
+}
+
+function pickVoice(preferMale: boolean): SpeechSynthesisVoice | null {
+  const voices = window.speechSynthesis?.getVoices() ?? [];
+  if (voices.length === 0) return null;
+  const enUS = voices.filter(v => v.lang === 'en-US');
+  const en   = voices.filter(v => v.lang.startsWith('en'));
+  const pool = enUS.length > 0 ? enUS : (en.length > 0 ? en : voices);
+  return [...pool].sort((a, b) => scoreVoice(b, preferMale) - scoreVoice(a, preferMale))[0];
+}
+
+export function initVoice(): void {
+  if (!window.speechSynthesis) return;
+  const { voicePreferMale } = getSettings();
+  const preferMale = voicePreferMale !== false;
+
+  const load = () => {
+    const v = pickVoice(preferMale);
+    if (v) { _voiceCache = v; _voicePrefMale = preferMale; }
+  };
+  load();
+  window.speechSynthesis.addEventListener('voiceschanged', load);
+}
+
+export function getSelectedVoiceName(): string {
+  if (!_voiceCache) return 'Default system voice';
+  return `${_voiceCache.name} (${_voiceCache.lang})`;
+}
+
 // ─── Text-to-speech helper ────────────────────────────────────────────────────
+// Splits text on sentence boundaries and queues utterances with a brief pause
+// between them so sentences don't blur together.
+
+function speakSentences(
+  sentences: string[],
+  voice: SpeechSynthesisVoice | null,
+  rate: number,
+  idx: number,
+): void {
+  if (idx >= sentences.length) return;
+  const u = new SpeechSynthesisUtterance(sentences[idx]);
+  u.rate  = rate;
+  u.pitch = 0.95;
+  u.lang  = 'en-US';
+  if (voice) u.voice = voice;
+  u.onend = () => setTimeout(() => speakSentences(sentences, voice, rate, idx + 1), 150);
+  window.speechSynthesis.speak(u);
+}
 
 export function speakText(text: string): void {
   if (!window.speechSynthesis) return;
   window.speechSynthesis.cancel();
-  const utterance       = new SpeechSynthesisUtterance(text);
-  utterance.rate        = 0.88;   // slightly slower — easier to follow
-  utterance.pitch       = 1.0;
-  utterance.lang        = 'en-US';
-  window.speechSynthesis.speak(utterance);
+
+  const settings   = getSettings();
+  const preferMale = settings.voicePreferMale !== false;
+  const rate       = settings.voiceRate ?? 0.85;
+
+  // Refresh cache if gender preference changed
+  if (_voicePrefMale !== preferMale) {
+    const v = pickVoice(preferMale);
+    if (v) { _voiceCache = v; _voicePrefMale = preferMale; }
+  } else if (!_voiceCache) {
+    const v = pickVoice(preferMale);
+    if (v) { _voiceCache = v; _voicePrefMale = preferMale; }
+  }
+
+  // Split on sentence boundaries safely (no lookbehind needed)
+  const sentences = text
+    .replace(/([.!?])\s+/g, '$1\n')
+    .split('\n')
+    .map(s => s.trim())
+    .filter(Boolean);
+
+  speakSentences(sentences, _voiceCache, rate, 0);
 }
 
 export function stopSpeaking(): void {

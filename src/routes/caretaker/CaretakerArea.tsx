@@ -185,8 +185,8 @@ function PinScreen({ onUnlocked }: { onUnlocked: () => void }) {
 
   function press(digit: string) {
     setError('')
-    const next = (entry + digit).slice(0, 6)
-    setEntry(next)
+    // Functional update so even the fastest tapping never drops a digit.
+    setEntry((current) => (current + digit).slice(0, 6))
   }
 
   function resetPin() {

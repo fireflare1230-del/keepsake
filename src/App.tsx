@@ -1,9 +1,12 @@
 import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
-import { useEffect } from 'react'
+import { Suspense, lazy, useEffect } from 'react'
 import Landing from './routes/Landing'
 import Onboarding from './routes/Onboarding'
 import CheckIn from './routes/CheckIn'
-import CaretakerArea from './routes/caretaker/CaretakerArea'
+
+// The caretaker area (and its chart library) loads lazily so the
+// patient-facing visit stays light and fast on a modest tablet (NFR-16).
+const CaretakerArea = lazy(() => import('./routes/caretaker/CaretakerArea'))
 
 /**
  * Keepsake routes (HashRouter so the built site works from a plain
@@ -31,7 +34,20 @@ export default function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/welcome" element={<Onboarding />} />
         <Route path="/visit" element={<CheckIn />} />
-        <Route path="/care/*" element={<CaretakerArea />} />
+        <Route
+          path="/care/*"
+          element={
+            <Suspense
+              fallback={
+                <main className="flex min-h-screen items-center justify-center text-ink-faint">
+                  Opening the caretaker area…
+                </main>
+              }
+            >
+              <CaretakerArea />
+            </Suspense>
+          }
+        />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </HashRouter>

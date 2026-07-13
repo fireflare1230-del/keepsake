@@ -143,10 +143,17 @@ function VisitFlow({ profile, preview }: { profile: Profile; preview: boolean })
   const [moodAck, setMoodAck] = useState('')
   const [momentAck, setMomentAck] = useState('')
   const [familyReplied, setFamilyReplied] = useState(false)
+  /** The answer just given, shown while Lane "thinks" about it. */
+  const [pendingAnswer, setPendingAnswer] = useState('')
   const [streakResult, setStreakResult] = useState<ProfileProgress | null>(null)
   const startRef = useRef(Date.now())
   const completedRef = useRef(false)
-  const scrollAnchor = useRef<HTMLDivElement>(null)
+
+  // The talk step shows only the current exchange; this is Lane's
+  // most recent conversational message.
+  const currentLaneText = [...visit.transcript]
+    .reverse()
+    .find((m) => m.role === 'lane' && m.suggestions)?.text
 
   const showSpeaker = settings.readAloudEnabled && canSpeak()
 
@@ -158,11 +165,6 @@ function VisitFlow({ profile, preview }: { profile: Profile; preview: boolean })
     if (stepIndex === 0) return
     saveDraft({ visit, stepIndex, savedAt: new Date().toISOString() })
   }, [visit, stepIndex, preview, resumeChoice])
-
-  // Gentle scroll to the newest message.
-  useEffect(() => {
-    scrollAnchor.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
-  }, [visit.transcript.length, thinking])
 
   function pushMessage(message: Message) {
     setVisit((v) => ({ ...v, transcript: [...v.transcript, message] }))
@@ -196,6 +198,7 @@ function VisitFlow({ profile, preview }: { profile: Profile; preview: boolean })
       new Promise((resolve) => setTimeout(resolve, 900)),
     ])
     setThinking(false)
+    setPendingAnswer('')
     pushMessage({
       role: 'lane',
       text: turn.message,
@@ -225,6 +228,9 @@ function VisitFlow({ profile, preview }: { profile: Profile; preview: boolean })
     if (!trimmed || thinking) return
     stopSpeaking()
     patientSays(trimmed)
+    // After the wrap-up there is no further Lane reply, so the tapped
+    // chip is recorded but the screen stays on Lane's goodbye.
+    if (!talkDone) setPendingAnswer(trimmed)
     setSuggestions([])
     setInput('')
     if (!talkDone) {
@@ -248,6 +254,33 @@ function VisitFlow({ profile, preview }: { profile: Profile; preview: boolean })
     setListening(true)
     listener.start()
   }
+
+  // What Lane says in the family step (also recorded in the transcript).
+  const familyShare = person
+    ? `I was thinking about your ${person.relationship.toLowerCase()}, ${person.name}.` +
+      (person.notes ? ` ${person.notes.replace(/\.?$/, '.')}` : '') +
+      ` You are so loved, ${profile.preferredName}.`
+    : ''
+
+  // The moment and family steps show Lane lines that aren't produced by
+  // the turn engine; record them once so the caretaker's visit log reads
+  // as the complete conversation it was.
+  const sharesRecorded = useRef({ moment: false, family: false })
+  useEffect(() => {
+    if (step === 'moment' && moment && !sharesRecorded.current.moment) {
+      sharesRecorded.current.moment = true
+      laneSays(
+        moment.kind === 'music'
+          ? `Let's listen to one of your favorites: ${moment.song.title}. 🎵`
+          : moment.share
+      )
+    }
+    if (step === 'family' && person && !sharesRecorded.current.family) {
+      sharesRecorded.current.family = true
+      laneSays(familyShare)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step])
 
   // ----- completion ---------------------------------------------------------
   useEffect(() => {
@@ -393,107 +426,107 @@ function VisitFlow({ profile, preview }: { profile: Profile; preview: boolean })
       )}
 
       {/* -------------------------------- talk -------------------------------- */}
+      {/* One exchange at a time: the person's last answer, then Lane's
+          reply, large and calm. No growing chat log to read back through,
+          and nothing ever hides behind an overlay (NFR-6). The full
+          conversation is still recorded for the caretaker's visit log. */}
       {step === 'talk' && (
-        <div className="step-enter mt-6 pb-40">
+        <div className="step-enter mt-6">
           {/* Topic card (FR-16) */}
           <div className="mx-auto flex max-w-md items-center justify-center gap-3 rounded-full bg-sage-wash px-6 py-3">
             <span aria-hidden="true" className="text-2xl">{theme.emoji}</span>
             <span className="text-lg font-semibold text-sage-deep">
-              Today&rsquo;s memory: {theme.name}, {theme.cardLine}
+              Today&rsquo;s memory: {theme.name}
             </span>
           </div>
 
-          {/* Conversation */}
-          <div className="mt-8 space-y-5" aria-live="polite">
-            {visit.transcript
-              .filter((m) => m.role === 'patient' || m.suggestions)
-              .map((message, index) =>
-                message.role === 'lane' ? (
-                  <LaneBubble key={index} text={message.text} showSpeaker={showSpeaker} />
-                ) : (
-                  <div key={index} className="flex justify-end">
-                    <div className="max-w-[80%] rounded-xl rounded-br-sm bg-amber-wash px-5 py-3.5 text-xl">
-                      {message.text}
-                    </div>
-                  </div>
-                )
-              )}
-            {thinking && (
-              <div className="flex items-center gap-3 pl-14" aria-label="Lane is thinking">
+          {/* The current exchange */}
+          <div className="mt-8 min-h-[180px]" aria-live="polite">
+            {pendingAnswer && (
+              <div className="mb-5 flex justify-end">
+                <div className="max-w-[80%] rounded-xl rounded-br-sm bg-amber-wash px-5 py-3.5 text-xl">
+                  {pendingAnswer}
+                </div>
+              </div>
+            )}
+            {thinking ? (
+              <div className="flex items-center gap-3 pl-14 pt-4" aria-label="Lane is thinking">
                 <span className="thinking-dot" />
                 <span className="thinking-dot" />
                 <span className="thinking-dot" />
               </div>
+            ) : (
+              currentLaneText && (
+                <div key={laneTurnCount} className="step-enter">
+                  <LaneBubble large text={currentLaneText} showSpeaker={showSpeaker} />
+                </div>
+              )
             )}
-            <div ref={scrollAnchor} />
           </div>
 
           {/* Answer area, chips first, blanks never required (§8.3) */}
-          <div className="fixed inset-x-0 bottom-0 border-t border-cream-deep bg-cream/95 py-4 backdrop-blur">
-            <div className="mx-auto max-w-visit px-6">
-              {suggestions.length > 0 && (
-                <div className="flex flex-wrap justify-center gap-3">
-                  {suggestions.map((chip) => (
-                    <Chip key={chip} onClick={() => answer(chip)} disabled={thinking}>
-                      {chip}
-                    </Chip>
-                  ))}
-                </div>
-              )}
-              {talkDone && !thinking && (
-                <div className="mt-4 flex justify-center">
-                  <Button size="xl" onClick={next}>
-                    {moment?.kind === 'music'
-                      ? 'A song for you →'
-                      : moment
-                        ? 'One more nice thing →'
-                        : person
-                          ? 'One more thing →'
-                          : 'Finish the visit →'}
-                  </Button>
-                </div>
-              )}
-              {!talkDone && (
-                <form
-                  className="mx-auto mt-4 flex max-w-xl gap-2"
-                  onSubmit={(e) => {
-                    e.preventDefault()
-                    answer(input)
-                  }}
-                >
-                  <label htmlFor="own-words" className="sr-only">
-                    Or say it in your own words
-                  </label>
-                  <input
-                    id="own-words"
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    placeholder="Or your own words…"
-                    className="min-h-[56px] w-full rounded-full border border-cream-deep bg-[#FFFDF9] px-6 text-lg"
-                    disabled={thinking}
-                  />
-                  {canListen() && (
-                    <button
-                      type="button"
-                      onClick={startListening}
-                      aria-label={listening ? 'Listening…' : 'Speak your answer'}
-                      aria-pressed={listening}
-                      className={
-                        'min-h-[56px] min-w-[56px] rounded-full border text-2xl shadow-card ' +
-                        (listening
-                          ? 'animate-pulse border-rust bg-rust-wash'
-                          : 'border-cream-deep bg-[#FFFDF9] hover:bg-brand-wash')
-                      }
-                    >
-                      🎤
-                    </button>
-                  )}
-                  <Button type="submit" disabled={!input.trim() || thinking}>
-                    Send
-                  </Button>
-                </form>
-              )}
-            </div>
+          <div className="mt-8">
+            {!thinking && suggestions.length > 0 && (
+              <div className="flex flex-wrap justify-center gap-3">
+                {suggestions.map((chip) => (
+                  <Chip key={chip} onClick={() => answer(chip)}>
+                    {chip}
+                  </Chip>
+                ))}
+              </div>
+            )}
+            {talkDone && !thinking && (
+              <div className="mt-6 flex justify-center">
+                <Button size="xl" onClick={next}>
+                  {moment?.kind === 'music'
+                    ? 'A song for you →'
+                    : moment
+                      ? 'One more nice thing →'
+                      : person
+                        ? 'One more thing →'
+                        : 'Finish the visit →'}
+                </Button>
+              </div>
+            )}
+            {!talkDone && !thinking && (
+              <form
+                className="mx-auto mt-6 flex max-w-xl gap-2"
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  answer(input)
+                }}
+              >
+                <label htmlFor="own-words" className="sr-only">
+                  Or say it in your own words
+                </label>
+                <input
+                  id="own-words"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="Or your own words…"
+                  className="min-h-[56px] w-full rounded-full border border-cream-deep bg-[#FFFDF9] px-6 text-lg"
+                />
+                {canListen() && (
+                  <button
+                    type="button"
+                    onClick={startListening}
+                    aria-label={listening ? 'Listening…' : 'Speak your answer'}
+                    aria-pressed={listening}
+                    className={
+                      'min-h-[56px] min-w-[56px] rounded-full border text-2xl shadow-card ' +
+                      (listening
+                        ? 'animate-pulse border-rust bg-rust-wash'
+                        : 'border-cream-deep bg-[#FFFDF9] hover:bg-brand-wash')
+                    }
+                  >
+                    🎤
+                  </button>
+                )}
+                <Button type="submit" disabled={!input.trim()}>
+                  Send
+                </Button>
+              </form>
+            )}
           </div>
         </div>
       )}
@@ -556,15 +589,7 @@ function VisitFlow({ profile, preview }: { profile: Profile; preview: boolean })
         <div className="step-enter mt-10">
           <h1 className="text-center text-4xl">Someone who loves you 💛</h1>
           <div className="mx-auto mt-8 max-w-xl">
-            <LaneBubble
-              large
-              showSpeaker={showSpeaker}
-              text={
-                `I was thinking about your ${person.relationship.toLowerCase()}, ${person.name}.` +
-                (person.notes ? ` ${person.notes.replace(/\.?$/, '.')}` : '') +
-                ` You are so loved, ${profile.preferredName}.`
-              }
-            />
+            <LaneBubble large showSpeaker={showSpeaker} text={familyShare} />
             {familyReplied && (
               <div className="mt-5">
                 <LaneBubble large showSpeaker={false} text="They love you right back, I can tell." />

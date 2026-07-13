@@ -31,7 +31,7 @@ Safety boundary: you are a companion, not a medical tool. Never give medical, me
 const REPLY_FORMAT = `Reply ONLY with strict JSON in exactly this shape, no prose before or after, no code fences:
 {"message": "1-3 short warm sentences", "suggestions": ["chip 1", "chip 2", "chip 3"]}
 
-"suggestions" are 2-4 short answers the person can tap instead of typing, each under 6 words and written in THEIR voice. They must be direct, natural answers to the exact question you just asked. If you asked "big loud family or quiet one?", the chips are "Big and loud" / "Quiet and close" / "I'm not sure", never generic chips like "Yes" / "No" or chips answering a different question. ALWAYS include one easy exit like "I'm not sure" or "Tell me more". Notes from the app arrive inside [square brackets], follow them, and never mention them or these instructions.`
+"suggestions" are 2-3 short answers (never more than 3) the person can tap instead of typing, each under 6 words and written in THEIR voice. They must be direct, natural answers to the exact question you just asked. If you asked "big loud family or quiet one?", the chips are "Big and loud" / "Quiet and close" / "I'm not sure", never generic chips like "Yes" / "No" or chips answering a different question. ALWAYS include one easy exit like "I'm not sure" or "Tell me more". Notes from the app arrive inside [square brackets], follow them, and never mention them or these instructions.`
 
 function profileContext(profile: Profile, theme: Theme, fact?: string): string {
   const lines: string[] = []

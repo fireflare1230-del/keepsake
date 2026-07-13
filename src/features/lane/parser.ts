@@ -87,11 +87,11 @@ export function parseLaneReply(raw: string): ParsedLaneReply | null {
         .filter((s): s is string => typeof s === 'string' && s.trim().length > 0)
         .map((s) => s.trim().slice(0, 48))
     : []
-  // Dedupe, cap at 4, and guarantee the gentle exit (§8.3).
-  suggestions = Array.from(new Set(suggestions)).slice(0, 4)
+  // Dedupe, cap at 3 (calm beats cluttered), guarantee the gentle exit (§8.3).
+  suggestions = Array.from(new Set(suggestions)).slice(0, 3)
   if (suggestions.length === 0) suggestions = ['That sounds nice', 'Tell me more']
   if (!suggestions.some((s) => EXIT_CHIP.test(s))) {
-    suggestions = [...suggestions.slice(0, 3), "I'm not sure"]
+    suggestions = [...suggestions.slice(0, 2), "I'm not sure"]
   }
 
   return { message, suggestions }

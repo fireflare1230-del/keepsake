@@ -6,11 +6,21 @@ import { getActiveProfile, loadVisits } from '../../lib/storage'
 import type { Visit } from '../../types'
 
 /**
- * The visit log (FR-25): every visit, openable to its full transcript,
- * with JSON/CSV export (FR-26).
+ * The visit log (FR-25): every visit opens into a full detail view,
+ * how it went at a glance, the summary, warm moments, flags, and the
+ * complete conversation. JSON/CSV export (FR-26).
  */
 
 const MOOD_EMOJI = ['😞', '😕', '😐', '🙂', '😄']
+const MOOD_WORD = ['Not so good', 'A little low', 'Okay', 'Good', 'Wonderful']
+const ENGAGEMENT_WORD = ['Very quiet', 'Quiet', 'Present', 'Engaged', 'Lit up']
+
+function formatDuration(seconds?: number): string {
+  if (!seconds) return 'n/a'
+  if (seconds < 60) return 'under a minute'
+  const minutes = Math.round(seconds / 60)
+  return `${minutes} minute${minutes === 1 ? '' : 's'}`
+}
 
 export default function VisitLog() {
   const profile = getActiveProfile()
@@ -63,6 +73,8 @@ export default function VisitLog() {
   )
 }
 
+/* ------------------------------ one visit -------------------------------- */
+
 function VisitCard({
   visit,
   open,
@@ -108,26 +120,84 @@ function VisitCard({
 
       {open && (
         <div className="border-t border-cream-deep px-6 py-5">
+          {/* ------------------------- at a glance ------------------------- */}
+          <h3 className="text-lg font-semibold text-ink-muted">At a glance</h3>
+          <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
+            <GlanceStat
+              label="Mood at check-in"
+              value={
+                visit.mood
+                  ? `${MOOD_EMOJI[visit.mood - 1]} ${MOOD_WORD[visit.mood - 1]}`
+                  : 'Not recorded'
+              }
+            />
+            <GlanceStat
+              label="Engagement"
+              value={
+                visit.summary
+                  ? `${ENGAGEMENT_WORD[visit.summary.engagement - 1]} (${visit.summary.engagement}/5)`
+                  : 'No summary yet'
+              }
+            />
+            <GlanceStat label="Visit length" value={formatDuration(visit.durationSec)} />
+            <GlanceStat
+              label="Conversation"
+              value={visit.mode === 'ai' ? 'AI (their profile)' : 'Built-in prompts'}
+            />
+          </div>
+
+          {visit.factReinforced && (
+            <p className="mt-4 rounded-lg bg-sage-wash px-4 py-3 text-base text-sage-deep">
+              🌱 Gentle fact shared this visit: &ldquo;{visit.factReinforced}&rdquo;
+            </p>
+          )}
+
+          {/* -------------------------- the summary ------------------------- */}
           {visit.summary && (
-            <div className="mb-5 rounded-lg bg-brand-wash/60 p-4">
-              <p className="text-base">{visit.summary.summary}</p>
-              <p className="mt-2 text-base text-ink-muted">
-                Engagement: {visit.summary.engagement}/5
-                {visit.factReinforced && <> · Gentle fact shared: “{visit.factReinforced}”</>}
-              </p>
-              {visit.summary.flags.length > 0 && (
-                <ul className="mt-2 space-y-1">
-                  {visit.summary.flags.map((flag) => (
-                    <li key={flag} className="text-base text-rust-deep">
-                      ⚑ {flag}
-                    </li>
-                  ))}
-                </ul>
+            <div className="mt-6">
+              <h3 className="text-lg font-semibold text-ink-muted">How it went</h3>
+              <p className="mt-2 text-base">{visit.summary.summary}</p>
+
+              {visit.summary.highlights.length > 0 && (
+                <>
+                  <h4 className="mt-4 text-base font-semibold text-ink-muted">
+                    Warm moments
+                  </h4>
+                  <ul className="mt-1.5 space-y-1.5">
+                    {visit.summary.highlights.map((highlight) => (
+                      <li key={highlight} className="text-base">
+                        ✨ {highlight}
+                      </li>
+                    ))}
+                  </ul>
+                </>
               )}
+
+              {visit.summary.flags.length > 0 && (
+                <>
+                  <h4 className="mt-4 text-base font-semibold text-ink-muted">
+                    Worth a gentle eye
+                  </h4>
+                  <ul className="mt-1.5 space-y-1.5">
+                    {visit.summary.flags.map((flag) => (
+                      <li key={flag} className="rounded-lg bg-rust-wash/70 px-3 py-2 text-base text-rust-deep">
+                        ⚑ {flag}
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+
+              <p className="mt-4 rounded-lg bg-brand-wash/60 px-4 py-3 text-base text-brand-deeper">
+                💛 {visit.summary.encouragement}
+              </p>
             </div>
           )}
 
-          <h3 className="mb-3 text-lg font-semibold text-ink-muted">Transcript</h3>
+          {/* ------------------------- the conversation --------------------- */}
+          <h3 className="mb-3 mt-6 text-lg font-semibold text-ink-muted">
+            The whole conversation
+          </h3>
           {visit.transcript.length === 0 ? (
             <p className="text-base text-ink-faint">No conversation was recorded.</p>
           ) : (
@@ -153,5 +223,16 @@ function VisitCard({
         </div>
       )}
     </li>
+  )
+}
+
+function GlanceStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg bg-cream-soft px-4 py-3">
+      <p className="text-sm font-semibold uppercase tracking-wide text-ink-faint">
+        {label}
+      </p>
+      <p className="mt-1 text-base font-semibold">{value}</p>
+    </div>
   )
 }

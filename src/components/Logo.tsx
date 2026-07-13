@@ -1,4 +1,4 @@
-/** The Keepsake mark — an amber tile holding a cream heart. */
+/** The Keepsake mark, an amber tile holding a cream heart. */
 
 export function LogoMark({ size = 40 }: { size?: number }) {
   return (
@@ -24,8 +24,8 @@ export function LogoLockup({ size = 36 }: { size?: number }) {
     <span className="inline-flex items-center gap-3">
       <LogoMark size={size} />
       <span
-        className="font-bold tracking-tight text-ink"
-        style={{ fontSize: size * 0.62 }}
+        className="font-display font-bold tracking-tight text-ink"
+        style={{ fontSize: size * 0.66 }}
       >
         Keepsake
       </span>

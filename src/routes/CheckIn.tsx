@@ -12,34 +12,35 @@ import {
   buildVisitSummary,
   nextLaneTurn,
 } from '../features/lane/conversation'
+import { pickMoment } from '../features/checkin/moments'
 import { timeGreeting } from '../lib/dates'
 import { canListen, canSpeak, createListener, speak, stopSpeaking } from '../lib/speech'
 import {
-  advanceTheme,
   clearDraft,
   getActiveProfile,
   loadDraft,
-  loadProgress,
   loadSettings,
   loadVisits,
+  peekNextThemeIndex,
   recordCompletedVisit,
   saveDraft,
+  saveLastThemeIndex,
   saveVisit,
   uid,
 } from '../lib/storage'
 import type { Message, Profile, ProfileProgress, Visit } from '../types'
 
 /**
- * The patient daily check-in (FR-13..20) — one calm step at a time:
+ * The patient daily check-in (FR-13..20), one calm step at a time:
  *
- *   hello → mood → talk (3–5 turns with Lane) → music → family → done
+ *   hello → mood → talk (3-5 turns with Lane) → music → family → done
  *
  * No login, no time pressure, nothing to get wrong. The caretaker opens
  * this screen and hands the device over. `?preview=1` runs the identical
  * flow for the caretaker without saving anything (§16.11).
  */
 
-type StepName = 'hello' | 'mood' | 'talk' | 'music' | 'family' | 'done'
+type StepName = 'hello' | 'mood' | 'talk' | 'moment' | 'family' | 'done'
 
 export default function CheckIn() {
   const [params] = useSearchParams()
@@ -77,9 +78,8 @@ function VisitFlow({ profile, preview }: { profile: Profile; preview: boolean })
   // ----- the visit record ------------------------------------------------
   const [visit, setVisit] = useState<Visit>(() => {
     if (resumable) return resumable.visit
-    const themeIndex = preview
-      ? (loadProgress(profile.id).lastThemeIndex + 1) % THEMES.length
-      : advanceTheme(profile.id, THEMES.length)
+    // Peek only; the rotation pointer is saved when the visit completes.
+    const themeIndex = peekNextThemeIndex(profile.id, THEMES.length)
     return {
       id: uid(),
       profileId: profile.id,
@@ -99,20 +99,23 @@ function VisitFlow({ profile, preview }: { profile: Profile; preview: boolean })
   const fact = profile.factsToReinforce.length
     ? profile.factsToReinforce[completedCount % profile.factsToReinforce.length]
     : undefined
-  const song = profile.favoriteMusic.length
-    ? profile.favoriteMusic[completedCount % profile.favoriteMusic.length]
-    : undefined
+  // Today's special moment rotates: a favorite song one visit, their team
+  // or a favorite food/show the next (v1.1).
+  const moment = useMemo(
+    () => pickMoment(profile, completedCount),
+    [profile, completedCount]
+  )
   const person = profile.family.length
     ? profile.family[completedCount % profile.family.length]
     : undefined
 
   const steps = useMemo<StepName[]>(() => {
     const list: StepName[] = ['hello', 'mood', 'talk']
-    if (song) list.push('music')
+    if (moment) list.push('moment')
     if (person) list.push('family')
     list.push('done')
     return list
-  }, [song, person])
+  }, [moment, person])
 
   const [stepIndex, setStepIndex] = useState(() => (resumable ? resumable.stepIndex : 0))
   const step = steps[Math.min(stepIndex, steps.length - 1)]
@@ -138,6 +141,7 @@ function VisitFlow({ profile, preview }: { profile: Profile; preview: boolean })
   const [input, setInput] = useState('')
   const [listening, setListening] = useState(false)
   const [moodAck, setMoodAck] = useState('')
+  const [momentAck, setMomentAck] = useState('')
   const [familyReplied, setFamilyReplied] = useState(false)
   const [streakResult, setStreakResult] = useState<ProfileProgress | null>(null)
   const startRef = useRef(Date.now())
@@ -146,9 +150,12 @@ function VisitFlow({ profile, preview }: { profile: Profile; preview: boolean })
 
   const showSpeaker = settings.readAloudEnabled && canSpeak()
 
-  // Persist a draft after every change so an interrupted visit resumes (FR-20).
+  // Persist a draft after every change so an interrupted visit resumes
+  // (FR-20). Only once there is real progress: stopping at the hello
+  // screen should not trigger the "welcome back" choice next time.
   useEffect(() => {
     if (preview || visit.completed || resumeChoice === 'pending') return
+    if (stepIndex === 0) return
     saveDraft({ visit, stepIndex, savedAt: new Date().toISOString() })
   }, [visit, stepIndex, preview, resumeChoice])
 
@@ -177,11 +184,15 @@ function VisitFlow({ profile, preview }: { profile: Profile; preview: boolean })
   // ----- talk step engine --------------------------------------------------
   const laneTurnCount = visit.transcript.filter((m) => m.role === 'lane' && m.suggestions).length
 
-  async function requestLaneTurn(turnIndex: number, history: Message[]) {
+  async function requestLaneTurn(
+    turnIndex: number,
+    history: Message[],
+    lastAnswer?: string
+  ) {
     setThinking(true)
-    // A short, unhurried beat — Lane never pops in abruptly.
+    // A short, unhurried beat, Lane never pops in abruptly.
     const [turn] = await Promise.all([
-      nextLaneTurn({ profile, theme, turnIndex, history, fact }),
+      nextLaneTurn({ profile, theme, turnIndex, history, lastAnswer, fact }),
       new Promise((resolve) => setTimeout(resolve, 900)),
     ])
     setThinking(false)
@@ -217,10 +228,14 @@ function VisitFlow({ profile, preview }: { profile: Profile; preview: boolean })
     setSuggestions([])
     setInput('')
     if (!talkDone) {
-      requestLaneTurn(laneTurnCount, [
-        ...visit.transcript,
-        { role: 'patient', text: trimmed, ts: new Date().toISOString() },
-      ])
+      requestLaneTurn(
+        laneTurnCount,
+        [
+          ...visit.transcript,
+          { role: 'patient', text: trimmed, ts: new Date().toISOString() },
+        ],
+        trimmed
+      )
     }
   }
 
@@ -247,11 +262,16 @@ function VisitFlow({ profile, preview }: { profile: Profile; preview: boolean })
     if (!preview) {
       saveVisit(finished)
       setStreakResult(recordCompletedVisit(profile.id))
+      const themeIndex = THEMES.findIndex((t) => t.name === finished.theme)
+      if (themeIndex >= 0) saveLastThemeIndex(profile.id, themeIndex)
       clearDraft(profile.id)
-      // The caretaker summary is generated in the background (§8.4) —
+      // The caretaker summary is generated in the background (§8.4),
       // the celebration never waits on it.
       buildVisitSummary(finished, profile).then((summary) => {
         saveVisit({ ...finished, summary })
+        // If the caretaker has an account, quietly refresh the cloud copy.
+        // Dynamic import keeps the patient bundle light.
+        import('../lib/cloud').then((m) => m.backupToCloudQuietly())
       })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -349,7 +369,7 @@ function VisitFlow({ profile, preview }: { profile: Profile; preview: boolean })
                 onPick={(mood) => {
                   const ack =
                     mood <= 2
-                      ? `Thank you for telling me, ${profile.preferredName}. Some days are heavy — I'm right here with you.`
+                      ? `Thank you for telling me, ${profile.preferredName}. Some days are heavy, I'm right here with you.`
                       : mood === 3
                         ? `Thank you for telling me. We'll take today nice and easy, together.`
                         : `That's wonderful to hear. Days like this are a gift.`
@@ -379,7 +399,7 @@ function VisitFlow({ profile, preview }: { profile: Profile; preview: boolean })
           <div className="mx-auto flex max-w-md items-center justify-center gap-3 rounded-full bg-sage-wash px-6 py-3">
             <span aria-hidden="true" className="text-2xl">{theme.emoji}</span>
             <span className="text-lg font-semibold text-sage-deep">
-              Today&rsquo;s memory: {theme.name} — {theme.cardLine}
+              Today&rsquo;s memory: {theme.name}, {theme.cardLine}
             </span>
           </div>
 
@@ -408,7 +428,7 @@ function VisitFlow({ profile, preview }: { profile: Profile; preview: boolean })
             <div ref={scrollAnchor} />
           </div>
 
-          {/* Answer area — chips first, blanks never required (§8.3) */}
+          {/* Answer area, chips first, blanks never required (§8.3) */}
           <div className="fixed inset-x-0 bottom-0 border-t border-cream-deep bg-cream/95 py-4 backdrop-blur">
             <div className="mx-auto max-w-visit px-6">
               {suggestions.length > 0 && (
@@ -423,7 +443,13 @@ function VisitFlow({ profile, preview }: { profile: Profile; preview: boolean })
               {talkDone && !thinking && (
                 <div className="mt-4 flex justify-center">
                   <Button size="xl" onClick={next}>
-                    {song ? 'A song for you →' : person ? 'One more thing →' : 'Finish the visit →'}
+                    {moment?.kind === 'music'
+                      ? 'A song for you →'
+                      : moment
+                        ? 'One more nice thing →'
+                        : person
+                          ? 'One more thing →'
+                          : 'Finish the visit →'}
                   </Button>
                 </div>
               )}
@@ -472,19 +498,54 @@ function VisitFlow({ profile, preview }: { profile: Profile; preview: boolean })
         </div>
       )}
 
-      {/* -------------------------------- music -------------------------------- */}
-      {step === 'music' && song && (
+      {/* --------------------------- special moment ---------------------------- */}
+      {step === 'moment' && moment?.kind === 'music' && (
         <div className="step-enter mt-10">
           <h1 className="text-center text-4xl">A song for you 🎵</h1>
           <p className="mt-3 text-center text-xl text-ink-muted">
             Take all the time you like, {profile.preferredName}.
           </p>
           <div className="mx-auto mt-8 max-w-xl">
-            <MusicEmbed videoId={song.videoId} title={song.title} />
+            <MusicEmbed videoId={moment.song.videoId} title={moment.song.title} />
           </div>
           <div className="mt-10 text-center">
             <Button size="xl" onClick={next}>
               That was lovely →
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {step === 'moment' && moment?.kind === 'favorite' && (
+        <div className="step-enter mt-10">
+          <h1 className="text-center text-4xl">One of your favorites 💛</h1>
+          <div className="mx-auto mt-8 max-w-xl">
+            <LaneBubble large showSpeaker={showSpeaker} text={moment.share} />
+            {momentAck && (
+              <div className="mt-5">
+                <LaneBubble large showSpeaker={false} text={momentAck} />
+              </div>
+            )}
+          </div>
+          {!momentAck && (
+            <div className="mt-10 flex flex-wrap justify-center gap-3">
+              {moment.chips.map((chip) => (
+                <Chip
+                  key={chip.label}
+                  onClick={() => {
+                    patientSays(chip.label)
+                    laneSays(chip.ack)
+                    setMomentAck(chip.ack)
+                  }}
+                >
+                  {chip.label}
+                </Chip>
+              ))}
+            </div>
+          )}
+          <div className="mt-8 text-center">
+            <Button size="xl" onClick={next}>
+              {person ? 'One more thing →' : 'Finish the visit →'}
             </Button>
           </div>
         </div>
@@ -506,7 +567,7 @@ function VisitFlow({ profile, preview }: { profile: Profile; preview: boolean })
             />
             {familyReplied && (
               <div className="mt-5">
-                <LaneBubble large showSpeaker={false} text="They love you right back — I can tell." />
+                <LaneBubble large showSpeaker={false} text="They love you right back, I can tell." />
               </div>
             )}
           </div>
@@ -517,7 +578,7 @@ function VisitFlow({ profile, preview }: { profile: Profile; preview: boolean })
                   key={chip}
                   onClick={() => {
                     patientSays(chip)
-                    laneSays('They love you right back — I can tell.')
+                    laneSays('They love you right back, I can tell.')
                     setFamilyReplied(true)
                   }}
                 >
@@ -547,13 +608,13 @@ function VisitFlow({ profile, preview }: { profile: Profile; preview: boolean })
                 {streakResult.currentStreak === 1 ? '' : 's'} in a row
               </p>
               <p className="mt-2 text-lg text-ink-muted">
-                of showing up — and showing up is everything.
+                of showing up, and showing up is everything.
               </p>
             </div>
           )}
           {preview && (
             <p className="mx-auto mt-6 max-w-md text-lg text-ink-muted">
-              (Preview — nothing was saved, and the streak wasn&rsquo;t touched.)
+              (Preview, nothing was saved, and the streak wasn&rsquo;t touched.)
             </p>
           )}
           <p className="mt-8 text-xl text-ink-muted">See you tomorrow. 💛</p>
@@ -585,7 +646,7 @@ function Shell({
     <div className="min-h-screen">
       {preview && (
         <div className="bg-brand-wash py-2 text-center font-semibold text-brand-deeper">
-          Caretaker preview — nothing will be saved
+          Caretaker preview, nothing will be saved
         </div>
       )}
       <header className="mx-auto flex max-w-visit items-center gap-5 px-6 py-5">
@@ -642,7 +703,7 @@ function SpeakButton({ text }: { text: string }) {
   if (!canSpeak()) return null
   return (
     <button
-      onClick={() => speak(text)}
+      onClick={() => speak(text, loadSettings().voiceURI)}
       className="inline-flex min-h-[44px] items-center gap-2 rounded-full px-4 py-1.5 text-base font-semibold text-brand-deep hover:bg-brand-wash"
       aria-label="Read this message aloud"
     >

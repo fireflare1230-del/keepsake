@@ -1,5 +1,5 @@
 /**
- * YouTube helpers — extract a video id from the many URL shapes people
+ * YouTube helpers, extract a video id from the many URL shapes people
  * paste, and build a privacy-friendly embed URL.
  */
 
@@ -38,7 +38,7 @@ export function extractVideoId(input: string): string | null {
 
 /**
  * youtube-nocookie.com keeps tracking cookies out of the app while the
- * song plays — in keeping with the privacy promise (NFR-12).
+ * song plays, in keeping with the privacy promise (NFR-12).
  */
 export function buildEmbedUrl(videoId: string): string {
   return `https://www.youtube-nocookie.com/embed/${videoId}?rel=0`

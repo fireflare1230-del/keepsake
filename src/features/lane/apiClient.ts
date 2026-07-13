@@ -1,5 +1,5 @@
 /**
- * apiClient.ts — the ONLY module in Keepsake that talks to the network
+ * apiClient.ts, the ONLY module in Keepsake that talks to the network
  * (PRD §11.4). It calls the Anthropic Messages API directly from the
  * browser with the user's own key.
  *
@@ -22,7 +22,7 @@ export type LaneErrorKind =
 
 export interface LaneError {
   kind: LaneErrorKind
-  /** Calm, human message — safe to show a caretaker. */
+  /** Calm, human message, safe to show a caretaker. */
   message: string
 }
 
@@ -41,13 +41,13 @@ function describeStatus(status: number): LaneError {
     return {
       kind: 'auth',
       message:
-        "That API key didn't work — let's check it. Open Settings → Test connection after pasting it again.",
+        "That API key didn't work, let's check it. Open Settings → Test connection after pasting it again.",
     }
   }
   if (status === 429) {
     return {
       kind: 'rate-limit',
-      message: "Let's pause a moment — the AI service asked us to slow down. Try again shortly.",
+      message: "Let's pause a moment, the AI service asked us to slow down. Try again shortly.",
     }
   }
   if (status >= 500) {
@@ -76,7 +76,7 @@ export async function callMessages(options: {
       ok: false,
       error: {
         kind: 'no-key',
-        message: 'No API key is set — Keepsake will use its built-in prompts instead.',
+        message: 'No API key is set, Keepsake will use its built-in prompts instead.',
       },
     }
   }
@@ -151,7 +151,7 @@ export async function testConnection(
     maxTokens: 8,
   })
   if (result.ok) {
-    return { ok: true, message: 'Connected — Lane is ready for AI conversations.' }
+    return { ok: true, message: 'Connected, Lane is ready for AI conversations.' }
   }
   return { ok: false, message: result.error.message }
 }

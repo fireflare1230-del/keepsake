@@ -49,6 +49,11 @@ export default function Dashboard() {
       to: 'profile',
     },
     {
+      label: 'Add favorite things (a team, a drink, a show)',
+      done: Object.values(profile.favorites).some((list) => list.length > 0),
+      to: 'profile',
+    },
+    {
       label: 'Add one gentle fact to reinforce',
       done: profile.factsToReinforce.length > 0,
       to: 'profile',
@@ -77,7 +82,7 @@ export default function Dashboard() {
   return (
     <div className="py-8">
       <h1 className="text-3xl">
-        {timeGreeting()} — here&rsquo;s {profile.preferredName}&rsquo;s Keepsake.
+        {timeGreeting()}, here&rsquo;s {profile.preferredName}&rsquo;s Keepsake.
       </h1>
 
       {/* ------------------------- quick actions ------------------------- */}
@@ -97,7 +102,7 @@ export default function Dashboard() {
         </Button>
       </div>
       <p className="mt-3 text-base text-ink-faint">
-        Preview lets you feel what a visit is like — it isn&rsquo;t saved and
+        Preview lets you feel what a visit is like, it isn&rsquo;t saved and
         doesn&rsquo;t touch the streak.
       </p>
 

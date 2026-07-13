@@ -14,16 +14,16 @@ import {
   setActiveProfile,
   uid,
 } from '../lib/storage'
-import type { Profile } from '../types'
+import { emptyFavorites, type Profile } from '../types'
 
 /**
  * First-run onboarding (FR-6..9). Four gentle steps, skippable down to
  * the bare minimum (just names) so setup takes under two minutes:
  *
- *   1. Who is this for?   — name + preferred name (required)
- *   2. A few warm details — birth year, hometown, a happy memory (optional)
- *   3. AI conversation    — paste an Anthropic key (optional, "later" is fine)
- *   4. Caretaker PIN      — set a PIN (recommended, skippable)
+ *   1. Who is this for?  , name + preferred name (required)
+ *   2. A few warm details, birth year, hometown, a happy memory (optional)
+ *   3. AI conversation   , paste an Anthropic key (optional, "later" is fine)
+ *   4. Caretaker PIN     , set a PIN (recommended, skippable)
  */
 
 const TOTAL_STEPS = 4
@@ -32,25 +32,25 @@ export default function Onboarding() {
   const navigate = useNavigate()
   const [step, setStep] = useState(0)
 
-  // Step 1 — required
+  // Step 1, required
   const [name, setName] = useState('')
   const [preferredName, setPreferredName] = useState('')
   const [nameError, setNameError] = useState('')
 
-  // Step 2 — optional details
+  // Step 2, optional details
   const [birthYear, setBirthYear] = useState('')
   const [hometown, setHometown] = useState('')
   const [happyMemory, setHappyMemory] = useState('')
 
-  // Step 3 — optional API key
+  // Step 3, optional API key
   const [apiKey, setApiKey] = useState('')
 
-  // Step 4 — PIN
+  // Step 4, PIN
   const [pin, setPin] = useState('')
   const [pinConfirm, setPinConfirm] = useState('')
   const [pinError, setPinError] = useState('')
 
-  // Onboarding is for first run — if a profile already exists, the
+  // Onboarding is for first run, if a profile already exists, the
   // caretaker area is the right place to add more.
   useEffect(() => {
     ensureSchema()
@@ -60,7 +60,7 @@ export default function Onboarding() {
   function next() {
     if (step === 0) {
       if (!name.trim()) {
-        setNameError('Please enter their name — everything else is optional.')
+        setNameError('Please enter their name, everything else is optional.')
         return
       }
       setNameError('')
@@ -79,7 +79,7 @@ export default function Onboarding() {
         return
       }
       if (pin !== pinConfirm) {
-        setPinError("Those PINs don't match — one more try.")
+        setPinError("Those PINs don't match, one more try.")
         return
       }
     }
@@ -94,6 +94,7 @@ export default function Onboarding() {
       happyMemory: happyMemory.trim() || undefined,
       family: [],
       favoriteMusic: [],
+      favorites: emptyFavorites(),
       topicsToAvoid: [],
       factsToReinforce: [],
       createdAt: now,
@@ -161,7 +162,7 @@ export default function Onboarding() {
               <h1 className="text-3xl">A few warm details</h1>
               <p className="mt-2 text-ink-muted">
                 These help Lane share memories instead of asking for them. All
-                optional — you can add much more later.
+                optional, you can add much more later.
               </p>
               <div className="mt-6 space-y-5">
                 <Field
@@ -185,7 +186,7 @@ export default function Onboarding() {
                   value={happyMemory}
                   onChange={(e) => setHappyMemory(e.target.value)}
                   placeholder="Summer evenings on the porch with sweet tea…"
-                  hint="Lane will bring this up gently — never as a quiz."
+                  hint="Lane will bring this up gently, never as a quiz."
                 />
               </div>
             </>
@@ -197,7 +198,7 @@ export default function Onboarding() {
               <p className="mt-2 text-ink-muted">
                 With an Anthropic API key, Lane holds a natural conversation.
                 Without one, Keepsake still works fully using friendly built-in
-                prompts — <strong>you can do this later</strong> in Settings.
+                prompts, <strong>you can do this later</strong> in Settings.
               </p>
               <div className="mt-6 space-y-5">
                 <Field
@@ -223,7 +224,7 @@ export default function Onboarding() {
               </p>
               <div className="mt-6 space-y-5">
                 <Field
-                  label="PIN (4–6 digits)"
+                  label="PIN (4-6 digits)"
                   type="password"
                   inputMode="numeric"
                   value={pin}
@@ -266,7 +267,7 @@ export default function Onboarding() {
               ) : null}
               {step === 3 && (
                 <Button variant="ghost" onClick={() => finish(false)}>
-                  Skip — no PIN
+                  Skip, no PIN
                 </Button>
               )}
               {step < 3 ? (

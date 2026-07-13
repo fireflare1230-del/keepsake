@@ -1,8 +1,20 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Button from '../../components/Button'
 import { Field } from '../../components/Field'
 import { testConnection } from '../../features/lane/apiClient'
+import {
+  backupToCloud,
+  deleteCloudBackup,
+  getCloudStatus,
+  getCurrentUser,
+  restoreFromCloud,
+  signIn,
+  signOut,
+  signUp,
+} from '../../lib/cloud'
+import { friendlyDateTime } from '../../lib/dates'
 import { hashPin } from '../../lib/pin'
+import { canSpeak, listVoices, speak, whenVoicesReady } from '../../lib/speech'
 import {
   buildBackup,
   forgetApiKey,
@@ -14,7 +26,7 @@ import { MODEL_OPTIONS } from '../../types'
 
 /**
  * Settings (FR-27): API key with "forget key", model picker, PIN change,
- * read-aloud toggle, Test connection — plus data backup & restore (§16.11).
+ * read-aloud toggle, Test connection, plus data backup & restore (§16.11).
  */
 
 export default function Settings() {
@@ -30,6 +42,39 @@ export default function Settings() {
 
   const [backupMessage, setBackupMessage] = useState('')
   const fileInput = useRef<HTMLInputElement>(null)
+
+  // Voice picker (v1.1)
+  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([])
+  useEffect(() => {
+    whenVoicesReady().then(() => setVoices(listVoices()))
+  }, [])
+
+  // Account & sync (v1.1)
+  const [accountEmail, setAccountEmail] = useState<string | null>(null)
+  const [emailDraft, setEmailDraft] = useState('')
+  const [passwordDraft, setPasswordDraft] = useState('')
+  const [accountBusy, setAccountBusy] = useState(false)
+  const [accountMessage, setAccountMessage] = useState<{ ok: boolean; message: string } | null>(null)
+  const [lastBackedUpAt, setLastBackedUpAt] = useState<string | undefined>()
+  useEffect(() => {
+    getCurrentUser().then((user) => {
+      setAccountEmail(user?.email ?? null)
+      if (user) getCloudStatus().then((s) => setLastBackedUpAt(s.lastBackedUpAt))
+    })
+  }, [])
+
+  async function runAccountAction(
+    action: () => Promise<{ ok: boolean; message: string }>
+  ) {
+    setAccountBusy(true)
+    setAccountMessage(null)
+    const result = await action()
+    setAccountMessage(result)
+    const user = await getCurrentUser()
+    setAccountEmail(user?.email ?? null)
+    if (user) getCloudStatus().then((s) => setLastBackedUpAt(s.lastBackedUpAt))
+    setAccountBusy(false)
+  }
 
   function persist(next: typeof settings) {
     setSettings(next)
@@ -69,7 +114,7 @@ export default function Settings() {
       return
     }
     if (pinDraft !== pinConfirm) {
-      setPinMessage("Those PINs don't match — one more try.")
+      setPinMessage("Those PINs don't match, one more try.")
       return
     }
     persist({ ...settings, pinHash: await hashPin(pinDraft) })
@@ -82,7 +127,7 @@ export default function Settings() {
     const next = { ...settings }
     delete next.pinHash
     persist(next)
-    setPinMessage('PIN removed — the caretaker area is open on this device.')
+    setPinMessage('PIN removed, the caretaker area is open on this device.')
   }
 
   /* ----------------------------- backups ------------------------------- */
@@ -98,7 +143,7 @@ export default function Settings() {
     a.download = `keepsake-backup-${new Date().toISOString().slice(0, 10)}.json`
     a.click()
     URL.revokeObjectURL(url)
-    setBackupMessage('Backup downloaded — keep it somewhere safe.')
+    setBackupMessage('Backup downloaded, keep it somewhere safe.')
   }
 
   function importBackup(file: File) {
@@ -122,7 +167,7 @@ export default function Settings() {
         </h2>
         <p className="mt-2 text-base text-ink-muted">
           Your Anthropic API key stays in this browser and is sent only to
-          Anthropic — never to any other server. Without a key, Lane uses
+          Anthropic, never to any other server. Without a key, Lane uses
           friendly built-in prompts and Keepsake stays completely free.
         </p>
 
@@ -211,7 +256,7 @@ export default function Settings() {
           ))}
         </div>
         <p className="mt-4 text-base text-ink-faint">
-          Prices change — confirm current rates on Anthropic&rsquo;s pricing
+          Prices change, confirm current rates on Anthropic&rsquo;s pricing
           page.
         </p>
       </section>
@@ -234,6 +279,51 @@ export default function Settings() {
             Offer to read Lane&rsquo;s messages out loud during visits
           </span>
         </label>
+
+        {canSpeak() && voices.length > 0 && (
+          <div className="mt-5 border-t border-cream-deep pt-5">
+            <label htmlFor="voice-picker" className="mb-1.5 block font-semibold text-ink">
+              Lane&rsquo;s voice
+            </label>
+            <p className="mb-3 text-base text-ink-faint">
+              Keepsake picks the most natural voice your device offers. You
+              can choose a different one and hear a sample.
+            </p>
+            <div className="flex flex-wrap items-center gap-3">
+              <select
+                id="voice-picker"
+                className="min-h-[48px] max-w-full rounded-lg border border-cream-deep bg-[#FFFDF9] px-3 py-2 text-base"
+                value={settings.voiceURI ?? ''}
+                onChange={(e) =>
+                  persist({ ...settings, voiceURI: e.target.value || undefined })
+                }
+              >
+                <option value="">Automatic (best available)</option>
+                {voices.map((voice) => (
+                  <option key={voice.voiceURI} value={voice.voiceURI}>
+                    {voice.name.replace(/^Microsoft\s|\(Natural\)\s*|- English.*$/g, '').trim() || voice.name}
+                    {/natural|neural/i.test(voice.name) ? ' (natural)' : ''}
+                  </option>
+                ))}
+              </select>
+              <Button
+                variant="secondary"
+                onClick={() =>
+                  speak(
+                    "Good morning. It's so good to sit with you today.",
+                    loadSettings().voiceURI
+                  )
+                }
+              >
+                🔊 Hear a sample
+              </Button>
+            </div>
+            <p className="mt-3 text-base text-ink-faint">
+              Tip: on Windows tablets, Microsoft Edge offers the most
+              natural-sounding voices.
+            </p>
+          </div>
+        )}
       </section>
 
       {/* -------------------------------- PIN --------------------------------- */}
@@ -243,12 +333,12 @@ export default function Settings() {
         </h2>
         <p className="mt-2 text-base text-ink-muted">
           {settings.pinHash
-            ? 'A PIN is set. It keeps casual fingers out on a shared tablet — it is not bank-grade security.'
-            : 'No PIN is set — anyone using this device can open the caretaker area.'}
+            ? 'A PIN is set. It keeps casual fingers out on a shared tablet, it is not bank-grade security.'
+            : 'No PIN is set, anyone using this device can open the caretaker area.'}
         </p>
         <div className="mt-5 grid gap-4 md:grid-cols-2">
           <Field
-            label={settings.pinHash ? 'New PIN (4–6 digits)' : 'PIN (4–6 digits)'}
+            label={settings.pinHash ? 'New PIN (4-6 digits)' : 'PIN (4-6 digits)'}
             type="password"
             inputMode="numeric"
             value={pinDraft}
@@ -281,6 +371,123 @@ export default function Settings() {
         )}
       </section>
 
+      {/* --------------------------- account & sync ---------------------------- */}
+      <section className="card mt-6" aria-labelledby="account-heading">
+        <h2 id="account-heading" className="text-2xl">
+          Keepsake account &amp; cloud backup
+        </h2>
+        <p className="mt-2 text-base text-ink-muted">
+          Optional and free. An account keeps a private copy of profiles and
+          visits in the cloud, so you can restore them on a new device or
+          after a browser cleanup. Your AI key and PIN never leave this
+          device, and Keepsake works fully without an account.
+        </p>
+
+        {accountEmail ? (
+          <div className="mt-5 space-y-4">
+            <p className="rounded-lg bg-moss-wash px-4 py-3 text-moss-deep">
+              Signed in as <strong>{accountEmail}</strong>
+              {lastBackedUpAt
+                ? `. Last backup: ${friendlyDateTime(lastBackedUpAt)}.`
+                : '. No cloud backup yet.'}
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <Button
+                disabled={accountBusy}
+                onClick={() => runAccountAction(backupToCloud)}
+              >
+                Back up now
+              </Button>
+              <Button
+                variant="secondary"
+                disabled={accountBusy}
+                onClick={() =>
+                  runAccountAction(async () => {
+                    const result = await restoreFromCloud()
+                    if (result.ok) setTimeout(() => window.location.reload(), 1200)
+                    return result
+                  })
+                }
+              >
+                Restore from cloud
+              </Button>
+              <Button
+                variant="ghost"
+                disabled={accountBusy}
+                onClick={() =>
+                  runAccountAction(async () => {
+                    await signOut()
+                    return { ok: true, message: 'Signed out. Your data stays on this device.' }
+                  })
+                }
+              >
+                Sign out
+              </Button>
+              <Button
+                variant="danger"
+                disabled={accountBusy}
+                onClick={() => runAccountAction(deleteCloudBackup)}
+              >
+                Delete cloud copy
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="mt-5 space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field
+                label="Email"
+                type="email"
+                value={emailDraft}
+                onChange={(e) => setEmailDraft(e.target.value)}
+                placeholder="you@example.com"
+                autoComplete="off"
+              />
+              <Field
+                label="Password"
+                type="password"
+                value={passwordDraft}
+                onChange={(e) => setPasswordDraft(e.target.value)}
+                hint="At least 6 characters."
+                autoComplete="off"
+              />
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Button
+                disabled={accountBusy || !emailDraft.trim() || passwordDraft.length < 6}
+                onClick={() =>
+                  runAccountAction(() => signIn(emailDraft.trim(), passwordDraft))
+                }
+              >
+                Sign in
+              </Button>
+              <Button
+                variant="secondary"
+                disabled={accountBusy || !emailDraft.trim() || passwordDraft.length < 6}
+                onClick={() =>
+                  runAccountAction(() => signUp(emailDraft.trim(), passwordDraft))
+                }
+              >
+                Create account
+              </Button>
+            </div>
+          </div>
+        )}
+        {accountMessage && (
+          <p
+            role="status"
+            className={
+              'mt-4 rounded-lg px-4 py-3 ' +
+              (accountMessage.ok
+                ? 'bg-moss-wash text-moss-deep'
+                : 'bg-rust-wash text-rust-deep')
+            }
+          >
+            {accountMessage.message}
+          </p>
+        )}
+      </section>
+
       {/* ---------------------------- data & backup ---------------------------- */}
       <section className="card mt-6" aria-labelledby="data-heading">
         <h2 id="data-heading" className="text-2xl">
@@ -288,7 +495,7 @@ export default function Settings() {
         </h2>
         <p className="mt-2 text-base text-ink-muted">
           Everything lives in this browser. Browsers occasionally clear
-          storage, so download a backup now and then — these are precious
+          storage, so download a backup now and then, these are precious
           memories. Backups never include your API key.
         </p>
         <div className="mt-5 flex flex-wrap gap-3">

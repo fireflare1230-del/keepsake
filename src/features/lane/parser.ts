@@ -4,7 +4,7 @@
  * Models occasionally wrap JSON in prose or code fences. Strategy:
  * strip fences → find the first balanced {...} → JSON.parse → validate
  * the shape → gently normalize. On any failure the caller falls back to
- * a safe scripted line — raw model text is never shown to the person.
+ * a safe scripted line, raw model text is never shown to the person.
  */
 
 export interface ParsedLaneReply {
@@ -77,7 +77,10 @@ export function parseLaneReply(raw: string): ParsedLaneReply | null {
   const data = parseJson(raw) as { message?: unknown; suggestions?: unknown } | null
   if (!data || typeof data.message !== 'string' || !data.message.trim()) return null
 
+  // House style: no em dashes ever reach the screen.
   const message = trimToThreeSentences(data.message)
+    .replace(/\s*—\s*/g, ', ')
+    .replace(/–/g, '-')
 
   let suggestions = Array.isArray(data.suggestions)
     ? data.suggestions
@@ -117,6 +120,6 @@ export function parseSummary(raw: string): ParsedSummary | null {
     encouragement:
       typeof data.encouragement === 'string' && data.encouragement.trim()
         ? data.encouragement.trim()
-        : 'These visits are a real gift — keep going at whatever pace feels right.',
+        : 'These visits are a real gift, keep going at whatever pace feels right.',
   }
 }

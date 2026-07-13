@@ -72,6 +72,13 @@ Prompts alone aren't enough; Keepsake also makes rule-breaking hard:
 - **The JSON contract.** Lane must reply as strict JSON
   (`{"message", "suggestions"}`). The UI renders the suggestions as 2–4
   large answer chips — so the person is always choosing, never producing.
+- **Per-answer acknowledgments (v1.1).** In scripted mode, every chip
+  carries its own hand-written acknowledgment that mirrors the person's
+  words back ("Big and loud! Everyone talking over each other...") before
+  the next share. This implements the caregiver "shared experiences"
+  exchange pattern: share your own, invite a preference, respond to what
+  they actually said. Typed answers get a warm generic acknowledgment.
+  In AI mode the same behavior is required by the system prompt.
 - **Defensive parsing.** If the AI reply isn't clean JSON, Keepsake never
   shows raw text — it falls back to a scripted line.
 - **The exit chip.** The parser *guarantees* an "I'm not sure" style chip

@@ -1,5 +1,5 @@
 /**
- * storage.ts — the ONLY module that touches localStorage.
+ * storage.ts, the ONLY module that touches localStorage.
  *
  * Everything Keepsake knows lives in this browser (PRD NFR-11):
  *
@@ -24,10 +24,10 @@ import type {
   Visit,
   VisitDraft,
 } from '../types'
-import { DEFAULT_MODEL } from '../types'
+import { DEFAULT_MODEL, emptyFavorites } from '../types'
 import { isoDay, isDayBefore } from './dates'
 
-export const SCHEMA_VERSION = 1
+export const SCHEMA_VERSION = 2
 
 const K = {
   schema: 'keepsake:schemaVersion',
@@ -70,7 +70,7 @@ function remove(key: string): void {
   }
 }
 
-/** Simple unique id — good enough for a single-device, no-server app. */
+/** Simple unique id, good enough for a single-device, no-server app. */
 export function uid(): string {
   return (
     Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10)
@@ -86,14 +86,29 @@ export function ensureSchema(): void {
     write(K.schema, SCHEMA_VERSION)
     return
   }
-  // Future migrations go here:
-  // if (version < 2) { ...migrate...; write(K.schema, 2) }
+  if (version < 2) {
+    // v2 adds Profile.favorites; normalizeProfile() backfills it on read,
+    // so the migration just persists the normalized shape once.
+    write(K.profiles, read<Profile[]>(K.profiles, []).map(normalizeProfile))
+    write(K.schema, 2)
+  }
 }
 
 /* ------------------------------ profiles -------------------------------- */
 
+/**
+ * Fills in fields added after a profile was created (older schema
+ * versions, restored backups from previous releases).
+ */
+function normalizeProfile(profile: Profile): Profile {
+  return {
+    ...profile,
+    favorites: { ...emptyFavorites(), ...(profile.favorites ?? {}) },
+  }
+}
+
 export function loadProfiles(): Profile[] {
-  return read<Profile[]>(K.profiles, [])
+  return read<Profile[]>(K.profiles, []).map(normalizeProfile)
 }
 
 export function saveProfile(profile: Profile): void {
@@ -159,7 +174,7 @@ export function saveSettings(settings: Settings): void {
   write(K.settings, settings)
 }
 
-/** The "forget key" button (NFR-14) — removes the key immediately. */
+/** The "forget key" button (NFR-14), removes the key immediately. */
 export function forgetApiKey(): void {
   const settings = loadSettings()
   delete settings.apiKey
@@ -196,7 +211,7 @@ export function saveProgress(profileId: string, progress: ProfileProgress): void
 }
 
 /**
- * Called once when a visit completes. The streak rewards SHOWING UP —
+ * Called once when a visit completes. The streak rewards SHOWING UP,
  * once per calendar day, never memory performance (FR-28/29).
  * Returns the updated progress so the celebration screen can show it.
  */
@@ -205,7 +220,7 @@ export function recordCompletedVisit(profileId: string): ProfileProgress {
   const today = isoDay()
 
   if (progress.lastVisitDate === today) {
-    // Second visit today — lovely, but the streak already counted.
+    // Second visit today, lovely, but the streak already counted.
     return progress
   }
 
@@ -222,12 +237,18 @@ export function recordCompletedVisit(profileId: string): ProfileProgress {
   return next
 }
 
-/** Advance to the next theme in rotation and persist the pointer (§8.5). */
-export function advanceTheme(profileId: string, themeCount: number): number {
+/**
+ * Theme rotation (§8.5): peek the next theme when a visit starts, and
+ * persist the pointer only when a visit actually completes, so an
+ * abandoned hello screen never burns a theme.
+ */
+export function peekNextThemeIndex(profileId: string, themeCount: number): number {
+  return (loadProgress(profileId).lastThemeIndex + 1) % themeCount
+}
+
+export function saveLastThemeIndex(profileId: string, index: number): void {
   const progress = loadProgress(profileId)
-  const nextIndex = (progress.lastThemeIndex + 1) % themeCount
-  saveProgress(profileId, { ...progress, lastThemeIndex: nextIndex })
-  return nextIndex
+  saveProgress(profileId, { ...progress, lastThemeIndex: index })
 }
 
 /* --------------------------- interrupted visits -------------------------- */
@@ -253,8 +274,8 @@ export interface BackupFile {
   profiles: Profile[]
   visits: Record<string, Visit[]>
   progress: Record<string, ProfileProgress>
-  /** Settings minus the API key — a backup never carries the key. */
-  settings: Omit<Settings, 'apiKey'>
+  /** Settings minus the API key and PIN, a backup never carries either. */
+  settings: Omit<Settings, 'apiKey' | 'pinHash'>
 }
 
 export function buildBackup(): BackupFile {
@@ -265,7 +286,7 @@ export function buildBackup(): BackupFile {
     visits[p.id] = loadVisits(p.id)
     progress[p.id] = loadProgress(p.id)
   }
-  const { apiKey: _omitted, ...settings } = loadSettings()
+  const { apiKey: _omitted, pinHash: _omitted2, ...settings } = loadSettings()
   return {
     app: 'keepsake',
     schemaVersion: SCHEMA_VERSION,

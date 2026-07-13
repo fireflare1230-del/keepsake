@@ -1,5 +1,5 @@
 /**
- * Keepsake shared types — the data model from PRD §12.
+ * Keepsake shared types, the data model from PRD §12.
  *
  * One deliberate refinement from the PRD's illustrative interfaces
  * (allowed by §12, flagged per §0): streaks and theme rotation live
@@ -23,6 +23,28 @@ export interface MusicLink {
   videoId: string
 }
 
+/**
+ * The person's favorite things (v1.1). Lane weaves these into
+ * conversations and the rotating "special moment" of each visit.
+ */
+export interface Favorites {
+  /** Teams and sports, e.g. "the Braves", "college football". */
+  sports: string[]
+  /** e.g. "sweet tea", "black coffee". */
+  drinks: string[]
+  /** e.g. "peach cobbler", "fried catfish". */
+  foods: string[]
+  /** Movies and shows, e.g. "westerns", "The Andy Griffith Show". */
+  shows: string[]
+  /** Hobbies and pastimes, e.g. "fishing", "gin rummy". */
+  hobbies: string[]
+}
+
+/** Fresh empty Favorites (a function so no arrays are ever shared). */
+export function emptyFavorites(): Favorites {
+  return { sports: [], drinks: [], foods: [], shows: [], hobbies: [] }
+}
+
 /** One patient profile, created and edited by the caretaker. */
 export interface Profile {
   id: string
@@ -33,10 +55,11 @@ export interface Profile {
   happyMemory?: string
   family: Person[]
   favoriteMusic: MusicLink[]
+  favorites: Favorites
   lifeStory?: string
   /** Topics Lane must gently steer away from (errorless learning). */
   topicsToAvoid: string[]
-  /** Gentle, reassuring facts for spaced retrieval — one restated per visit. */
+  /** Gentle, reassuring facts for spaced retrieval, one restated per visit. */
   factsToReinforce: string[]
   createdAt: string // ISO
   updatedAt: string // ISO
@@ -56,7 +79,7 @@ export interface Message {
 /** The post-visit caretaker summary (PRD §8.4). Never grades memory. */
 export interface VisitSummary {
   summary: string
-  engagement: number // 1–5
+  engagement: number // 1-5
   highlights: string[]
   flags: string[]
   encouragement: string
@@ -69,7 +92,7 @@ export interface Visit {
   id: string
   profileId: string
   date: string // ISO datetime the visit started
-  mood?: number // 1–5, emoji index; undefined if interrupted before mood
+  mood?: number // 1-5, emoji index; undefined if interrupted before mood
   theme: string // e.g. "Childhood"
   transcript: Message[]
   summary?: VisitSummary
@@ -77,9 +100,9 @@ export interface Visit {
   factReinforced?: string
   durationSec?: number
   completed: boolean
-  /** True for caretaker "Preview Lane" runs — excluded from streaks & charts. */
+  /** True for caretaker "Preview Lane" runs, excluded from streaks & charts. */
   preview?: boolean
-  /** 'ai' or 'scripted' — which mode the conversation ran in. */
+  /** 'ai' or 'scripted', which mode the conversation ran in. */
   mode?: 'ai' | 'scripted'
 }
 
@@ -87,9 +110,11 @@ export interface Visit {
 export interface Settings {
   apiKey?: string
   model: string
-  /** SHA-256 hash of the caretaker PIN (never the raw digits — §16.6). */
+  /** SHA-256 hash of the caretaker PIN (never the raw digits, §16.6). */
   pinHash?: string
   readAloudEnabled: boolean
+  /** Preferred speech-synthesis voice; unset means "auto-pick the best". */
+  voiceURI?: string
 }
 
 /** Per-profile streak + theme rotation state. */
@@ -114,7 +139,7 @@ export interface VisitDraft {
   savedAt: string
 }
 
-/** Model picker entries — current IDs verified July 2026 (PRD §12.4). */
+/** Model picker entries, current IDs verified July 2026 (PRD §12.4). */
 export interface ModelOption {
   id: string
   label: string
@@ -124,17 +149,17 @@ export interface ModelOption {
 export const MODEL_OPTIONS: ModelOption[] = [
   {
     id: 'claude-haiku-4-5-20251001',
-    label: 'Haiku — everyday visits (cheapest)',
+    label: 'Haiku, everyday visits (cheapest)',
     note: 'Roughly $1 in / $5 out per million tokens. A visit costs well under a cent to a few cents.',
   },
   {
     id: 'claude-sonnet-5',
-    label: 'Sonnet — warmer, more natural',
+    label: 'Sonnet, warmer, more natural',
     note: 'Roughly $2 in / $10 out per million tokens (intro pricing through Aug 31, 2026).',
   },
   {
     id: 'claude-opus-4-8',
-    label: 'Opus — premium (rarely needed)',
+    label: 'Opus, premium (rarely needed)',
     note: 'Roughly $5 in / $25 out per million tokens.',
   },
 ]

@@ -37,6 +37,26 @@ The `dist/` folder is a plain static site — you can open `dist/index.html`
 straight from the file system, or host it anywhere static files live
 (GitHub Pages, Netlify, Vercel — all free). No server is ever needed.
 
+## What's new in v1.1
+
+- **Two-sided conversations.** Lane now responds to the exact answer that
+  was tapped or typed (each answer chip carries its own warm
+  acknowledgment), following the "shared experiences" exchange pattern
+  from Alzheimer Society caregiver guidance and validation therapy.
+- **Favorite things.** Profiles now hold sports teams, drinks, foods,
+  movies and shows, and hobbies. Each visit's special moment rotates:
+  a favorite song one day, a chat about their team or a favorite dish
+  the next.
+- **A warmer voice.** Keepsake auto-picks the most natural voice your
+  device offers (on Windows, Edge's "natural" voices sound best), and
+  Settings has a voice picker with a sample button.
+- **Optional account.** Caretakers can create a free account
+  (Settings → Keepsake account) to keep a private cloud backup of
+  profiles and visits and restore them on any device. The app works
+  fully without one; the AI key and PIN never leave the device.
+- **A calmer look.** New fonts (Fraunces headings, Atkinson Hyperlegible
+  body, designed for low-vision readers) and a shorter landing page.
+
 ## The two modes
 
 | | |

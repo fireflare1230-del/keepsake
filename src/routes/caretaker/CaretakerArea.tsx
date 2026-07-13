@@ -26,7 +26,7 @@ import Report from './Report'
 
 /**
  * The PIN-protected caretaker area (FR-21). A local PIN keeps curious
- * fingers on a shared tablet out of profiles, notes, and settings — it
+ * fingers on a shared tablet out of profiles, notes, and settings, it
  * is honest, casual protection, not encryption (PRD §16.6).
  */
 
@@ -178,7 +178,7 @@ function PinScreen({ onUnlocked }: { onUnlocked: () => void }) {
     if (await verifyPin(candidate, pinHash)) {
       onUnlocked()
     } else {
-      setError("That PIN didn't match — try again.")
+      setError("That PIN didn't match, try again.")
       setEntry('')
     }
   }
@@ -225,7 +225,7 @@ function PinScreen({ onUnlocked }: { onUnlocked: () => void }) {
         </p>
       )}
 
-      {/* Big friendly keypad — comfortable on a tablet */}
+      {/* Big friendly keypad, comfortable on a tablet */}
       <div className="mt-6 grid w-64 grid-cols-3 gap-3">
         {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((d) => (
           <button

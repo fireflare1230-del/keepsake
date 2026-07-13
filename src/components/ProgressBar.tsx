@@ -1,5 +1,5 @@
 /**
- * The visit progress bar — quiet reassurance that the visit is moving
+ * The visit progress bar, quiet reassurance that the visit is moving
  * along, with no numbers or time pressure (NFR-6).
  */
 export default function ProgressBar({

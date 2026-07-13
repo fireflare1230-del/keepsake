@@ -5,7 +5,7 @@ import type {
 import { useId } from 'react'
 
 /**
- * Labeled form controls with hints — every input in the app gets a real
+ * Labeled form controls with hints, every input in the app gets a real
  * <label> tied to it (NFR-4) and comfortable 48px-tall targets.
  */
 

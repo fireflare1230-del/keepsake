@@ -10,7 +10,7 @@ import {
   setActiveProfile,
   uid,
 } from '../../lib/storage'
-import type { Profile } from '../../types'
+import { emptyFavorites, type Profile } from '../../types'
 
 /** Multiple profiles: switch, add, edit, delete (FR-10..12). */
 
@@ -36,6 +36,7 @@ export default function Profiles() {
       preferredName: newPreferred.trim() || newName.trim().split(' ')[0],
       family: [],
       favoriteMusic: [],
+      favorites: emptyFavorites(),
       topicsToAvoid: [],
       factsToReinforce: [],
       createdAt: now,
@@ -55,7 +56,7 @@ export default function Profiles() {
         )}
       </div>
       <p className="mt-2 max-w-2xl text-ink-muted">
-        Each profile keeps its own life story, visits, and streak — nothing is
+        Each profile keeps its own life story, visits, and streak, nothing is
         shared between them.
       </p>
 

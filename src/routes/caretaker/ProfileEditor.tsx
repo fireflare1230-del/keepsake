@@ -5,12 +5,13 @@ import ChipListEditor from '../../components/ChipListEditor'
 import { Field, TextArea } from '../../components/Field'
 import MusicEmbed from '../../components/MusicEmbed'
 import { extractVideoId } from '../../lib/youtube'
+import { backupToCloudQuietly } from '../../lib/cloud'
 import { getActiveProfile, saveProfile, uid } from '../../lib/storage'
-import type { MusicLink, Person } from '../../types'
+import type { Favorites, MusicLink, Person } from '../../types'
 
 /**
  * The profile editor (FR-23): everything Lane knows about the person.
- * The guidance in each hint follows the conversation research — collect
+ * The guidance in each hint follows the conversation research, collect
  * warm early-life material, note what to avoid, keep it minimal.
  */
 
@@ -38,6 +39,11 @@ export default function ProfileEditor() {
     if (!profile) return
     saveProfile(profile)
     setSavedFlash(true)
+    backupToCloudQuietly()
+  }
+
+  function updateFavorites(changes: Partial<Favorites>) {
+    update({ favorites: { ...profile!.favorites, ...changes } })
   }
 
   /* ------------------------------ people ------------------------------- */
@@ -95,7 +101,7 @@ export default function ProfileEditor() {
         </Link>
       </div>
       <p className="mt-2 max-w-2xl text-ink-muted">
-        Everything here helps Lane share warm, specific memories — and steer
+        Everything here helps Lane share warm, specific memories, and steer
         gently around hard ones. Add what feels right; more can come later.
       </p>
 
@@ -143,7 +149,7 @@ export default function ProfileEditor() {
               optional
               value={profile.happyMemory ?? ''}
               onChange={(e) => update({ happyMemory: e.target.value || undefined })}
-              hint="Something that reliably makes them smile. Lane shares it — never asks them to produce it."
+              hint="Something that reliably makes them smile. Lane shares it, never asks them to produce it."
             />
           </div>
         </section>
@@ -154,7 +160,7 @@ export default function ProfileEditor() {
             Family &amp; important people
           </h2>
           <p className="mt-2 text-base text-ink-faint">
-            Lane mentions these people warmly by name — &ldquo;Your daughter
+            Lane mentions these people warmly by name, &ldquo;Your daughter
             Mary comes by every Sunday.&rdquo;
           </p>
           <div className="mt-5 space-y-4">
@@ -216,7 +222,7 @@ export default function ProfileEditor() {
           </h2>
           <p className="mt-2 text-base text-ink-faint">
             Songs from their teens and twenties reach the deepest. Paste
-            YouTube links — each visit includes one music moment.
+            YouTube links, each visit includes one music moment.
           </p>
 
           <div className="mt-5 grid gap-3 md:grid-cols-[1fr_1.4fr_auto]">
@@ -224,7 +230,7 @@ export default function ProfileEditor() {
               label="Song name"
               value={songTitle}
               onChange={(e) => setSongTitle(e.target.value)}
-              placeholder="Moon River — Andy Williams"
+              placeholder="Moon River, Andy Williams"
             />
             <Field
               label="YouTube link"
@@ -286,6 +292,50 @@ export default function ProfileEditor() {
           )}
         </section>
 
+        {/* --------------------------- favorite things ------------------------ */}
+        <section className="card" aria-labelledby="favorites-heading">
+          <h2 id="favorites-heading" className="text-2xl">
+            Their favorite things
+          </h2>
+          <p className="mt-2 text-base text-ink-faint">
+            Lane brings these up the way an old friend would. A team, a cold
+            drink, a good western. Each one is a doorway to a warm chat, and
+            they take turns as the special moment of a visit.
+          </p>
+          <div className="mt-5 space-y-7">
+            <ChipListEditor
+              label="Sports & teams"
+              placeholder="The Braves"
+              values={profile.favorites.sports}
+              onChange={(sports) => updateFavorites({ sports })}
+            />
+            <ChipListEditor
+              label="Drinks"
+              placeholder="Sweet tea"
+              values={profile.favorites.drinks}
+              onChange={(drinks) => updateFavorites({ drinks })}
+            />
+            <ChipListEditor
+              label="Foods"
+              placeholder="Peach cobbler"
+              values={profile.favorites.foods}
+              onChange={(foods) => updateFavorites({ foods })}
+            />
+            <ChipListEditor
+              label="Movies & shows"
+              placeholder="The Andy Griffith Show"
+              values={profile.favorites.shows}
+              onChange={(shows) => updateFavorites({ shows })}
+            />
+            <ChipListEditor
+              label="Hobbies & pastimes"
+              placeholder="Fishing"
+              values={profile.favorites.hobbies}
+              onChange={(hobbies) => updateFavorites({ hobbies })}
+            />
+          </div>
+        </section>
+
         {/* ---------------------------- life story --------------------------- */}
         <section className="card" aria-labelledby="story-heading">
           <h2 id="story-heading" className="text-2xl">
@@ -301,7 +351,7 @@ export default function ProfileEditor() {
               placeholder={
                 'Grew up on a farm outside Mobile with three brothers. Met June at a church dance in 1961. Worked 30 proud years as a machinist at Brookley. Loved fishing on the causeway, Hank Williams, and his tomato garden…'
               }
-              hint="Early life matters most — childhood, young adulthood, work they were proud of. Lane draws on these details to share, never to test."
+              hint="Early life matters most, childhood, young adulthood, work they were proud of. Lane draws on these details to share, never to test."
             />
           </div>
         </section>
@@ -315,7 +365,7 @@ export default function ProfileEditor() {
             <ChipListEditor
               label="Topics to gently avoid"
               tone="rust"
-              hint="Lane will warmly change the subject — a late spouse's passing, a painful loss, anything that brings distress."
+              hint="Lane will warmly change the subject, a late spouse's passing, a painful loss, anything that brings distress."
               placeholder="The car accident"
               values={profile.topicsToAvoid}
               onChange={(topicsToAvoid) => update({ topicsToAvoid })}
@@ -323,7 +373,7 @@ export default function ProfileEditor() {
             <ChipListEditor
               label="Gentle facts to reinforce"
               tone="sage"
-              hint="Reassuring facts Lane restates warmly, one per visit — never as a question. Example: 'Your daughter Mary visits every Sunday.'"
+              hint="Reassuring facts Lane restates warmly, one per visit, never as a question. Example: 'Your daughter Mary visits every Sunday.'"
               placeholder="Mary visits every Sunday"
               values={profile.factsToReinforce}
               onChange={(factsToReinforce) => update({ factsToReinforce })}

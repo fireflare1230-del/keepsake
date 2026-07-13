@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 
 /**
  * A big, tap-able answer chip (FR-15). Structured choice instead of a
- * blank box — there is nothing to get wrong (Montessori / errorless).
+ * blank box, there is nothing to get wrong (Montessori / errorless).
  */
 export default function Chip({
   children,

@@ -2,7 +2,7 @@
  * Caretaker PIN helpers.
  *
  * Honest threat model (PRD §16.6): this PIN keeps a curious family member
- * on a shared tablet out of the caretaker area. It is NOT real security —
+ * on a shared tablet out of the caretaker area. It is NOT real security,
  * anyone technical can read localStorage. We therefore store a hash
  * (never the raw digits) and offer a friendly reset instead of pretending
  * the data is encrypted.
@@ -21,7 +21,7 @@ async function sha256Hex(text: string): Promise<string> {
 
 /**
  * FNV-1a fallback for non-secure contexts (opening the built site as a
- * plain file:// — crypto.subtle doesn't exist there). Weaker, but the
+ * plain file://, crypto.subtle doesn't exist there). Weaker, but the
  * PIN is casual deterrence either way.
  */
 function fnv1aHex(text: string): string {
@@ -77,6 +77,6 @@ export function setUnlocked(value: boolean): void {
     if (value) sessionStorage.setItem(UNLOCK_KEY, '1')
     else sessionStorage.removeItem(UNLOCK_KEY)
   } catch {
-    /* sessionStorage unavailable — the PIN gate will simply re-ask */
+    /* sessionStorage unavailable, the PIN gate will simply re-ask */
   }
 }

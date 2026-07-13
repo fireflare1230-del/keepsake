@@ -1,6 +1,6 @@
 /** Small date helpers used by streaks, visit logs, and charts. */
 
-/** yyyy-mm-dd for a Date (local time — streaks follow the user's clock). */
+/** yyyy-mm-dd for a Date (local time, streaks follow the user's clock). */
 export function isoDay(d: Date = new Date()): string {
   const y = d.getFullYear()
   const m = String(d.getMonth() + 1).padStart(2, '0')
@@ -15,7 +15,7 @@ export function isDayBefore(dayA: string, dayB: string): boolean {
   return b.getTime() - a.getTime() === 24 * 60 * 60 * 1000
 }
 
-/** "Tuesday, July 11" style — friendly for elderly users and caretakers. */
+/** "Tuesday, July 11" style, friendly for elderly users and caretakers. */
 export function friendlyDate(iso: string): string {
   const d = new Date(iso)
   return d.toLocaleDateString(undefined, {

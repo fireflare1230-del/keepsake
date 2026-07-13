@@ -16,7 +16,7 @@ import {
 
 export interface TrendPoint {
   label: string // short date, e.g. "Jul 4"
-  value: number // 1–5
+  value: number // 1-5
 }
 
 export default function TrendChart({
@@ -26,7 +26,7 @@ export default function TrendChart({
 }: {
   data: TrendPoint[]
   color: string
-  /** Turns 1–5 into a friendly word for ticks & tooltip, e.g. "Good 🙂". */
+  /** Turns 1-5 into a friendly word for ticks & tooltip, e.g. "Good 🙂". */
   formatValue: (value: number) => string
 }) {
   return (

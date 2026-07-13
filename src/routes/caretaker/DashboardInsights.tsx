@@ -56,7 +56,7 @@ export default function DashboardInsights({
           <p className="mt-3 text-base text-ink-faint">
             Longest: {progress.longestStreak} · {visits.length} visit
             {visits.length === 1 ? '' : 's'} all together. Streaks celebrate
-            showing up — memory is never scored.
+            showing up, memory is never scored.
           </p>
         </div>
 
@@ -93,7 +93,7 @@ export default function DashboardInsights({
             </>
           ) : (
             <p className="mt-3 text-ink-muted">
-              The visit finished — its summary is still being written.
+              The visit finished, its summary is still being written.
             </p>
           )}
         </div>
@@ -142,7 +142,7 @@ export default function DashboardInsights({
         <h2 className="text-xl">Gentle flags</h2>
         {recentFlags.length === 0 ? (
           <p className="mt-3 text-ink-muted">
-            Nothing needs your attention right now — lovely. Anything worth a
+            Nothing needs your attention right now, lovely. Anything worth a
             closer look from recent visits will show up here.
           </p>
         ) : (

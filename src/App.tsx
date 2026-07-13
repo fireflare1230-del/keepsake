@@ -14,7 +14,7 @@ const CaretakerArea = lazy(() => import('./routes/caretaker/CaretakerArea'))
  *
  *   #/            public landing page
  *   #/welcome     first-run onboarding wizard
- *   #/visit       the patient daily check-in (no login — FR-17)
+ *   #/visit       the patient daily check-in (no login, FR-17)
  *   #/care/*      PIN-protected caretaker area
  */
 

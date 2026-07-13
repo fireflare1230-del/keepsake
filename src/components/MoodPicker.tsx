@@ -1,5 +1,5 @@
 /**
- * The mood check-in — five big faces, any answer is a win (FR-14).
+ * The mood check-in, five big faces, any answer is a win (FR-14).
  * Emoji plus a word, never color alone (NFR-2).
  */
 

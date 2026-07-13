@@ -18,6 +18,17 @@
 *(This is the repo's Markdown copy of the PRD, converted from the original
 PDF per §16.1.)*
 
+> **v1.1 amendment (July 12, 2026, decided by the product owner):** an
+> *optional* cloud account (Supabase, free tier) was added for backup and
+> cross-device restore. This deliberately amends §6.1's "no backend" for
+> that one opt-in feature. The load-bearing part of §6 is unchanged: no
+> shared or hardcoded AI key exists anywhere, the AI key never leaves the
+> user's browser except to api.anthropic.com, and the app is fully usable
+> with no account and no key. v1.1 also added per-answer branching to the
+> scripted playbook, a "favorite things" profile section with a rotating
+> special moment, natural-voice selection, new fonts, and two new themes
+> (Sports & games, Movies & shows).
+
 ## 0. How to use this document (for the builder)
 
 This is the complete specification for Keepsake. Read it top to bottom

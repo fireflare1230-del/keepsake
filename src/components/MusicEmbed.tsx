@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { buildEmbedUrl } from '../lib/youtube'
 
 /**
- * The in-app music player — a YouTube embed via youtube-nocookie.com.
+ * The in-app music player, a YouTube embed via youtube-nocookie.com.
  *
  * Embeds can fail (some videos disable embedding, networks hiccup), and a
  * cross-origin iframe won't tell us. So a gentle reassurance line is always
@@ -38,7 +38,7 @@ export default function MusicEmbed({
       <figcaption className="px-4 py-3 text-base text-ink-muted">
         ♪ {title}
         <span className="ml-2 text-ink-faint">
-          — if it doesn&rsquo;t play, that&rsquo;s perfectly okay.
+          (if it doesn&rsquo;t play, that&rsquo;s perfectly okay)
         </span>
       </figcaption>
     </figure>

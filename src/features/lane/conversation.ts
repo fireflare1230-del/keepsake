@@ -1,14 +1,14 @@
 /**
- * Lane's conversation engine — one door for both modes.
+ * Lane's conversation engine, one door for both modes.
  *
  * With an API key: live Claude conversation under the golden-rule system
- * prompt with the strict JSON contract (§8.2/8.3). Without a key — or the
- * moment anything fails (network, bad key, malformed JSON) — the same
+ * prompt with the strict JSON contract (§8.2/8.3). Without a key, or the
+ * moment anything fails (network, bad key, malformed JSON), the same
  * request is answered from the scripted playbook instead, so a visit can
  * NEVER crash or show raw model text to the person (PRD §13, §16.4).
  */
 
-import type { Theme } from '../../data/themes'
+import { FREE_TEXT_ACKS, type Theme } from '../../data/themes'
 import type { Message, Profile, Visit, VisitSummary } from '../../types'
 import { loadSettings } from '../../lib/storage'
 import { callMessages, type ChatTurn } from './apiClient'
@@ -26,6 +26,8 @@ export interface LaneTurnRequest {
   turnIndex: number
   /** The talk-step transcript so far. */
   history: Message[]
+  /** The person's most recent answer (chip label or typed text). */
+  lastAnswer?: string
   /** The one gentle fact chosen for this visit (spaced retrieval). */
   fact?: string
 }
@@ -37,30 +39,45 @@ export interface LaneTurn {
   done: boolean
   /** True when this turn restated the gentle fact. */
   factShared?: boolean
-  /** Where the turn came from — lets the visit record its mode honestly. */
+  /** Where the turn came from, lets the visit record its mode honestly. */
   source: 'ai' | 'scripted'
 }
 
 /** Scripted turns end after the opener, two follow-ups, and a wrap-up. */
 export const SCRIPTED_FINAL_TURN = 3
 
+/**
+ * How Lane responds to what was actually said (validation therapy: mirror
+ * their words back). A tapped chip has a hand-written acknowledgment; a
+ * typed answer gets a warm generic one.
+ */
+function acknowledgeAnswer(request: LaneTurnRequest): string {
+  const { theme, turnIndex, lastAnswer } = request
+  if (!lastAnswer || turnIndex === 0) return ''
+  const previousTurn = theme.turns[turnIndex - 1]
+  const chip = previousTurn?.chips.find((c) => c.label === lastAnswer)
+  if (chip) return chip.ack
+  return FREE_TEXT_ACKS[turnIndex % FREE_TEXT_ACKS.length]
+}
+
 export function scriptedTurn(request: LaneTurnRequest): LaneTurn {
   const { profile, theme, turnIndex, fact } = request
+  const ack = acknowledgeAnswer(request)
 
   if (turnIndex < theme.turns.length) {
     const turn = theme.turns[turnIndex]
     return {
-      message: turn.message,
-      suggestions: turn.suggestions,
+      message: ack ? `${ack} ${turn.share}` : turn.share,
+      suggestions: turn.chips.map((c) => c.label),
       done: false,
       source: 'scripted',
     }
   }
 
-  // Wrap-up: restate the gentle fact as a warm statement — never a quiz.
+  // Wrap-up: restate the gentle fact as a warm statement, never a quiz.
   if (fact) {
     return {
-      message: `One more lovely thing, ${profile.preferredName}: ${fact}`,
+      message: `${ack ? ack + ' ' : ''}One more lovely thing, ${profile.preferredName}: ${fact}`,
       suggestions: ["That's right", "That's nice to hear"],
       done: true,
       factShared: true,
@@ -68,7 +85,7 @@ export function scriptedTurn(request: LaneTurnRequest): LaneTurn {
     }
   }
   return {
-    message: theme.closing,
+    message: ack ? `${ack} ${theme.closing}` : theme.closing,
     suggestions: ['That was lovely', 'Thank you'],
     done: true,
     source: 'scripted',
@@ -81,7 +98,7 @@ const MOOD_WORDS = ['not so good', 'a little low', 'okay', 'good', 'wonderful']
 
 /**
  * The no-key recap (§8.6): a simple, honest template. It reports
- * engagement and mood only — memory performance is never scored (FR-29).
+ * engagement and mood only, memory performance is never scored (FR-29).
  */
 export function scriptedSummary(visit: Visit, profile: Profile): VisitSummary {
   const patientReplies = visit.transcript.filter((m) => m.role === 'patient')
@@ -107,7 +124,7 @@ export function scriptedSummary(visit: Visit, profile: Profile): VisitSummary {
 
   const flags: string[] = []
   if (visit.mood !== undefined && visit.mood <= 2) {
-    flags.push('Mood was on the low side at check-in — worth a gentle eye today.')
+    flags.push('Mood was on the low side at check-in, worth a gentle eye today.')
   }
 
   return {
@@ -115,12 +132,12 @@ export function scriptedSummary(visit: Visit, profile: Profile): VisitSummary {
       `${profile.preferredName} completed a visit on the theme “${visit.theme},” ` +
       `answering ${patientReplies.length} time${patientReplies.length === 1 ? '' : 's'}. ` +
       `Mood at check-in: ${moodWord}. ` +
-      `(This recap is template-based — add an API key in Settings for richer AI summaries.)`,
+      `(This recap is template-based, add an API key in Settings for richer AI summaries.)`,
     engagement,
     highlights,
     flags,
     encouragement:
-      'Showing up is the whole gift — these small visits matter more than they look.',
+      'Showing up is the whole gift, these small visits matter more than they look.',
     generatedBy: 'scripted',
   }
 }

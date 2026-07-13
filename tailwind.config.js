@@ -56,13 +56,19 @@ export default {
       },
       fontFamily: {
         sans: [
-          'Inter',
+          'Atkinson Hyperlegible',
           'system-ui',
           '-apple-system',
           'Segoe UI',
           'Roboto',
           'sans-serif',
         ],
+        display: ['Fraunces', 'Georgia', 'Times New Roman', 'serif'],
+      },
+      fontWeight: {
+        // Atkinson Hyperlegible ships 400/700 only; snap semibold to 700
+        // so nothing renders as faux-bold.
+        semibold: '700',
       },
       fontSize: {
         // Elderly-friendly scale (NFR-1): body starts at 18px.

@@ -65,6 +65,40 @@ export interface Profile {
   updatedAt: string // ISO
 }
 
+/* ------------------------------ Lane learns ------------------------------ */
+
+/** What kind of thing Lane noticed (PDR v1.2 §2.2). */
+export type LearnedCategory =
+  | 'hometown'
+  | 'happyMemory'
+  | 'food'
+  | 'drink'
+  | 'sport'
+  | 'show'
+  | 'hobby'
+  | 'lifeStory'
+  | 'delight'
+  | 'avoid'
+
+/**
+ * A candidate fact Lane picked up during a visit (PDR v1.2 §2). Nothing
+ * is ever applied to the profile until the caretaker approves it, a
+ * misheard fact repeated back would be worse than no fact at all.
+ */
+export interface LearnedFact {
+  id: string
+  profileId: string
+  category: LearnedCategory
+  /** Short, plain phrasing suitable for the profile. */
+  value: string
+  /** The person's own words that support it, shown as evidence. */
+  quote?: string
+  sourceVisitId: string
+  visitDate: string // ISO
+  status: 'pending' | 'approved' | 'dismissed'
+  decidedAt?: string // ISO
+}
+
 export type Role = 'lane' | 'patient'
 
 /** One turn in a visit transcript. */

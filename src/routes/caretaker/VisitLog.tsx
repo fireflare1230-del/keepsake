@@ -2,8 +2,8 @@ import { useMemo, useState } from 'react'
 import Button from '../../components/Button'
 import { exportVisitsCsv, exportVisitsJson } from '../../lib/exporters'
 import { friendlyDateTime } from '../../lib/dates'
-import { getActiveProfile, loadVisits } from '../../lib/storage'
-import type { Visit } from '../../types'
+import { getActiveProfile, loadLearnedFacts, loadVisits } from '../../lib/storage'
+import type { LearnedFact, Visit } from '../../types'
 
 /**
  * The visit log (FR-25): every visit opens into a full detail view,
@@ -28,6 +28,17 @@ export default function VisitLog() {
     () => (profile ? loadVisits(profile.id) : []),
     [profile]
   )
+  // "Lane noticed" facts, grouped by the visit that produced them.
+  const learnedByVisit = useMemo(() => {
+    const map = new Map<string, LearnedFact[]>()
+    if (!profile) return map
+    for (const fact of loadLearnedFacts(profile.id)) {
+      const list = map.get(fact.sourceVisitId) ?? []
+      list.push(fact)
+      map.set(fact.sourceVisitId, list)
+    }
+    return map
+  }, [profile])
   const [openId, setOpenId] = useState<string | null>(null)
 
   if (!profile) return null
@@ -65,6 +76,7 @@ export default function VisitLog() {
               open={openId === visit.id}
               onToggle={() => setOpenId(openId === visit.id ? null : visit.id)}
               preferredName={profile.preferredName}
+              learned={learnedByVisit.get(visit.id) ?? []}
             />
           ))}
         </ul>
@@ -80,11 +92,13 @@ function VisitCard({
   open,
   onToggle,
   preferredName,
+  learned,
 }: {
   visit: Visit
   open: boolean
   onToggle: () => void
   preferredName: string
+  learned: LearnedFact[]
 }) {
   return (
     <li className="card p-0">
@@ -99,6 +113,14 @@ function VisitCard({
         <span className="font-semibold">{friendlyDateTime(visit.date)}</span>
         <span className="text-ink-muted">{visit.theme}</span>
         <span className="ml-auto flex items-center gap-2 text-base">
+          {learned.length > 0 && (
+            <span
+              className="rounded-full bg-sage-wash px-3 py-1 font-semibold text-sage-deep"
+              title="Lane noticed something new this visit"
+            >
+              🌱 {learned.length}
+            </span>
+          )}
           {visit.preview && (
             <span className="rounded-full bg-brand-wash px-3 py-1 font-semibold text-brand-deeper">
               Preview
@@ -150,6 +172,29 @@ function VisitCard({
             <p className="mt-4 rounded-lg bg-sage-wash px-4 py-3 text-base text-sage-deep">
               🌱 Gentle fact shared this visit: &ldquo;{visit.factReinforced}&rdquo;
             </p>
+          )}
+
+          {/* ---------------------- what Lane noticed ----------------------- */}
+          {learned.length > 0 && (
+            <div className="mt-4 rounded-lg bg-sage-wash/70 px-4 py-3">
+              <p className="text-base font-semibold text-sage-deep">
+                🌱 Lane noticed during this visit
+              </p>
+              <ul className="mt-1.5 space-y-1">
+                {learned.map((fact) => (
+                  <li key={fact.id} className="text-base text-ink">
+                    {fact.value}
+                    <span className="ml-2 text-sm text-ink-faint">
+                      {fact.status === 'pending'
+                        ? 'waiting for your review'
+                        : fact.status === 'approved'
+                          ? 'added to the profile'
+                          : 'dismissed'}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
 
           {/* -------------------------- the summary ------------------------- */}

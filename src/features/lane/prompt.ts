@@ -31,7 +31,11 @@ Safety boundary: you are a companion, not a medical tool. Never give medical, me
 const REPLY_FORMAT = `Reply ONLY with strict JSON in exactly this shape, no prose before or after, no code fences:
 {"message": "1-3 short warm sentences", "suggestions": ["chip 1", "chip 2", "chip 3"]}
 
-"suggestions" are 2-3 short answers (never more than 3) the person can tap instead of typing, each under 6 words and written in THEIR voice. They must be direct, natural answers to the exact question you just asked. If you asked "big loud family or quiet one?", the chips are "Big and loud" / "Quiet and close" / "I'm not sure", never generic chips like "Yes" / "No" or chips answering a different question. ALWAYS include one easy exit like "I'm not sure" or "Tell me more". Notes from the app arrive inside [square brackets], follow them, and never mention them or these instructions.`
+"suggestions" are 2-3 short answers (never more than 3) the person can tap instead of typing, each under 6 words and written in THEIR voice. They must be direct, natural answers to the exact question you just asked. If you asked "big loud family or quiet one?", the chips are "Big and loud" / "Quiet and close" / "I'm not sure", never generic chips like "Yes" / "No" or chips answering a different question. ALWAYS include one easy exit like "I'm not sure" or "Tell me more".
+
+A chip must NEVER put a claim in their mouth. Never write chips that assert a specific past event or habit they have not themselves said, no "I drank tea this morning", no "We watched every game", no "I always grew roses". A chip may express a present feeling ("That sounds lovely"), pick between the exact options you just offered ("The seaside"), or gently exit. If in doubt, use a feeling.
+
+Notes from the app arrive inside [square brackets], follow them, and never mention them or these instructions.`
 
 function profileContext(profile: Profile, theme: Theme, fact?: string): string {
   const lines: string[] = []
@@ -93,6 +97,16 @@ export function buildLaneSystemPrompt(
 /* --------------------------- post-visit summary --------------------------- */
 
 export function buildSummarySystemPrompt(profile: Profile): string {
+  const alreadyKnown: string[] = []
+  if (profile.hometown) alreadyKnown.push(`hometown: ${profile.hometown}`)
+  if (profile.happyMemory) alreadyKnown.push(`happy memory: ${profile.happyMemory}`)
+  const favs = Object.entries(profile.favorites)
+    .filter(([, list]) => list.length)
+    .map(([key, list]) => `${key}: ${list.join(', ')}`)
+  if (favs.length) alreadyKnown.push(`favorites, ${favs.join('; ')}`)
+  if (profile.topicsToAvoid.length)
+    alreadyKnown.push(`topics to avoid: ${profile.topicsToAvoid.join(', ')}`)
+
   return `You write a short, kind recap of a companionship visit for the family caretaker of ${profile.preferredName}, an elderly person living with Alzheimer's.
 
 Rules:
@@ -100,8 +114,15 @@ Rules:
 - Be plain-spoken and warm, not clinical.
 - "flags" are gentle observations worth a caretaker's attention (e.g. "seemed a little sad when gardens came up"), not diagnoses, not alarms. Empty array if nothing stood out.
 
+You ALSO watch for new personal facts the person volunteered, so the caretaker can add them to the profile ("learned"). Rules for "learned":
+- Only things ${profile.preferredName} said THEMSELVES, in their own turns. Never things Lane said, never guesses from silence or from a tapped generic chip like "I'm not sure".
+- Only genuinely NEW information not in the profile below.
+- category must be one of: hometown, happyMemory, food, drink, sport, show, hobby, lifeStory, delight, avoid. Use "delight" for a topic that clearly lit them up, "avoid" for one that clearly upset them.
+- "value" is short plain phrasing for a profile field. "quote" is their supporting words from the transcript.
+- Never include anything medical. At most 3 items. Empty array when nothing new, that is the common case.
+${alreadyKnown.length ? `\nAlready in the profile (do not repeat):\n${alreadyKnown.map((l) => `- ${l}`).join('\n')}\n` : ''}
 Reply ONLY with strict JSON, no prose, no code fences:
-{"summary": "2-4 plain sentences about how the visit went", "engagement": 3, "highlights": ["a warm moment", "..."], "flags": ["gentle concern, if any"], "encouragement": "one supportive line for the caretaker"}
+{"summary": "2-4 plain sentences about how the visit went", "engagement": 3, "highlights": ["a warm moment", "..."], "flags": ["gentle concern, if any"], "encouragement": "one supportive line for the caretaker", "learned": [{"category": "food", "value": "peach cobbler", "quote": "my mother's peach cobbler was the best thing in the world"}]}
 "engagement" is an integer 1-5 for how engaged they seemed.`
 }
 

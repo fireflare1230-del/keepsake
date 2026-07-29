@@ -10,7 +10,7 @@
 
 import { FREE_TEXT_ACKS, type Theme } from '../../data/themes'
 import type { Message, Profile, Visit, VisitSummary } from '../../types'
-import { loadSettings } from '../../lib/storage'
+import { addLearnedFacts, loadSettings } from '../../lib/storage'
 import { callMessages, type ChatTurn } from './apiClient'
 import { parseLaneReply, parseSummary } from './parser'
 import {
@@ -237,7 +237,19 @@ export async function buildVisitSummary(
       })
       if (result.ok) {
         const parsed = parseSummary(result.text)
-        if (parsed) return { ...parsed, generatedBy: 'ai' }
+        if (parsed) {
+          // Queue "Lane noticed" candidates for the caretaker's review
+          // inbox (PDR v1.2 §2). Preview visits never learn.
+          const { learned, ...summary } = parsed
+          if (!visit.preview && learned.length) {
+            try {
+              addLearnedFacts(visit.profileId, learned, visit.id, visit.date)
+            } catch {
+              /* the summary must never fail because learning did */
+            }
+          }
+          return { ...summary, generatedBy: 'ai' }
+        }
       }
     }
   } catch {

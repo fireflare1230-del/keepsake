@@ -9,6 +9,7 @@ import App from './App'
 import '@fontsource/fraunces/500.css'
 import '@fontsource/fraunces/600.css'
 import '@fontsource/fraunces/700.css'
+import '@fontsource/fraunces/600-italic.css'
 import '@fontsource/atkinson-hyperlegible/400.css'
 import '@fontsource/atkinson-hyperlegible/700.css'
 

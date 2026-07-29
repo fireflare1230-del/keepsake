@@ -26,10 +26,26 @@ function ScrollToTop() {
   return null
 }
 
+/** Real apps name their tabs; the title follows the route. */
+function PageTitle() {
+  const { pathname } = useLocation()
+  useEffect(() => {
+    document.title = pathname.startsWith('/care')
+      ? 'Caretaker area · Keepsake'
+      : pathname.startsWith('/visit')
+        ? "Today's visit · Keepsake"
+        : pathname.startsWith('/welcome')
+          ? 'Getting started · Keepsake'
+          : 'Keepsake · A gentle daily visit'
+  }, [pathname])
+  return null
+}
+
 export default function App() {
   return (
     <HashRouter>
       <ScrollToTop />
+      <PageTitle />
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/welcome" element={<Onboarding />} />

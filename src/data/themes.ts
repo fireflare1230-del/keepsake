@@ -162,8 +162,8 @@ export const THEMES: Theme[] = [
             ack: 'A wedding lover! All that hope and happiness in one room.',
           },
           {
-            label: 'Ours was lovely',
-            ack: 'Yours was lovely. I can just about hear the music and see the smiles.',
+            label: 'The cake is the best part',
+            ack: 'The cake, always! Somebody guarding it in the kitchen until it was time.',
           },
           {
             label: "I'm not sure",

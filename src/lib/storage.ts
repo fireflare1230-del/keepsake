@@ -18,6 +18,7 @@
 
 import type {
   AppState,
+  LearnedFact,
   Profile,
   ProfileProgress,
   Settings,
@@ -26,6 +27,7 @@ import type {
 } from '../types'
 import { DEFAULT_MODEL, emptyFavorites } from '../types'
 import { isoDay, isDayBefore } from './dates'
+import { deleteProfilePhotos } from './photos'
 
 export const SCHEMA_VERSION = 2
 
@@ -37,6 +39,7 @@ const K = {
   visits: (profileId: string) => `keepsake:visits:${profileId}`,
   progress: (profileId: string) => `keepsake:progress:${profileId}`,
   draft: (profileId: string) => `keepsake:draft:${profileId}`,
+  learned: (profileId: string) => `keepsake:learned:${profileId}`,
 }
 
 /* ------------------------------- primitives ------------------------------ */
@@ -129,6 +132,9 @@ export function deleteProfile(profileId: string): void {
   remove(K.visits(profileId))
   remove(K.progress(profileId))
   remove(K.draft(profileId))
+  remove(K.learned(profileId))
+  // Photos live in IndexedDB; best-effort async cleanup.
+  void deleteProfilePhotos(profileId).catch(() => {})
   const app = loadAppState()
   if (app.activeProfileId === profileId) {
     const remaining = loadProfiles()
@@ -194,6 +200,125 @@ export function saveVisit(visit: Visit): void {
   if (index >= 0) visits[index] = visit
   else visits.unshift(visit)
   write(K.visits(visit.profileId), visits)
+}
+
+/* ------------------------- Lane noticed (learned) ------------------------- */
+
+/** Newest first, capped so localStorage never bloats (PDR v1.2 §2.4). */
+const LEARNED_CAP = 200
+
+export function loadLearnedFacts(profileId: string): LearnedFact[] {
+  return read<LearnedFact[]>(K.learned(profileId), [])
+}
+
+function saveLearnedFacts(profileId: string, facts: LearnedFact[]): void {
+  write(K.learned(profileId), facts.slice(0, LEARNED_CAP))
+}
+
+const norm = (s: string) => s.trim().toLowerCase().replace(/\s+/g, ' ')
+
+/** Everything the profile already knows, for "is this actually new?". */
+function knownValues(profile: Profile): Set<string> {
+  const known = new Set<string>()
+  const add = (s?: string) => s && known.add(norm(s))
+  add(profile.hometown)
+  add(profile.happyMemory)
+  Object.values(profile.favorites).forEach((list) => list.forEach(add))
+  profile.topicsToAvoid.forEach(add)
+  return known
+}
+
+/**
+ * Queue fresh candidates from a visit. Anything the profile already has,
+ * or that was already suggested (pending, approved, OR dismissed, a
+ * dismissal must stick, PDR §2.1), is silently dropped.
+ */
+export function addLearnedFacts(
+  profileId: string,
+  candidates: Array<Pick<LearnedFact, 'category' | 'value' | 'quote'>>,
+  sourceVisitId: string,
+  visitDate: string
+): LearnedFact[] {
+  const profile = getProfile(profileId)
+  if (!profile) return []
+  const existing = loadLearnedFacts(profileId)
+  const seen = new Set(existing.map((f) => norm(f.value)))
+  const known = knownValues(profile)
+
+  const fresh: LearnedFact[] = []
+  for (const c of candidates) {
+    const value = c.value.trim()
+    if (!value || seen.has(norm(value)) || known.has(norm(value))) continue
+    seen.add(norm(value))
+    fresh.push({
+      id: uid(),
+      profileId,
+      category: c.category,
+      value,
+      quote: c.quote?.trim() || undefined,
+      sourceVisitId,
+      visitDate,
+      status: 'pending',
+    })
+  }
+  if (fresh.length) saveLearnedFacts(profileId, [...fresh, ...existing])
+  return fresh
+}
+
+/**
+ * Approve or dismiss one pending item. Approval merges the fact into the
+ * profile per the PDR §2.3 merge table, so it reaches Lane's prompt on
+ * the very next visit like any caretaker-entered data.
+ */
+export function decideLearnedFact(
+  profileId: string,
+  factId: string,
+  decision: 'approved' | 'dismissed'
+): void {
+  const facts = loadLearnedFacts(profileId)
+  const fact = facts.find((f) => f.id === factId)
+  if (!fact || fact.status !== 'pending') return
+  fact.status = decision
+  fact.decidedAt = new Date().toISOString()
+  saveLearnedFacts(profileId, facts)
+  if (decision === 'approved') applyLearnedFact(profileId, fact)
+}
+
+const FAVORITE_TARGET: Partial<Record<LearnedFact['category'], keyof Profile['favorites']>> = {
+  food: 'foods',
+  drink: 'drinks',
+  sport: 'sports',
+  show: 'shows',
+  hobby: 'hobbies',
+}
+
+function applyLearnedFact(profileId: string, fact: LearnedFact): void {
+  const profile = getProfile(profileId)
+  if (!profile) return
+  const appendToStory = () => {
+    const line = `${fact.value} (Lane noticed this on ${fact.visitDate.slice(0, 10)})`
+    profile.lifeStory = profile.lifeStory ? `${profile.lifeStory}\n${line}` : line
+  }
+
+  const favoriteKey = FAVORITE_TARGET[fact.category]
+  if (favoriteKey) {
+    const list = profile.favorites[favoriteKey]
+    if (!list.some((item) => norm(item) === norm(fact.value))) list.push(fact.value)
+  } else if (fact.category === 'hometown') {
+    if (profile.hometown?.trim()) appendToStory()
+    else profile.hometown = fact.value
+  } else if (fact.category === 'happyMemory') {
+    if (profile.happyMemory?.trim()) appendToStory()
+    else profile.happyMemory = fact.value
+  } else if (fact.category === 'avoid') {
+    if (!profile.topicsToAvoid.some((t) => norm(t) === norm(fact.value))) {
+      profile.topicsToAvoid.push(fact.value)
+    }
+  } else {
+    // lifeStory and delight both land as life-story lines.
+    appendToStory()
+  }
+  saveProfile(profile)
 }
 
 /* ----------------------- streaks & theme rotation ------------------------ */
@@ -274,6 +399,8 @@ export interface BackupFile {
   profiles: Profile[]
   visits: Record<string, Visit[]>
   progress: Record<string, ProfileProgress>
+  /** "Lane noticed" queue per profile (added v1.2; absent in old backups). */
+  learned?: Record<string, LearnedFact[]>
   /** Settings minus the API key and PIN, a backup never carries either. */
   settings: Omit<Settings, 'apiKey' | 'pinHash'>
 }
@@ -282,9 +409,11 @@ export function buildBackup(): BackupFile {
   const profiles = loadProfiles()
   const visits: Record<string, Visit[]> = {}
   const progress: Record<string, ProfileProgress> = {}
+  const learned: Record<string, LearnedFact[]> = {}
   for (const p of profiles) {
     visits[p.id] = loadVisits(p.id)
     progress[p.id] = loadProgress(p.id)
+    learned[p.id] = loadLearnedFacts(p.id)
   }
   const { apiKey: _omitted, pinHash: _omitted2, ...settings } = loadSettings()
   return {
@@ -294,6 +423,7 @@ export function buildBackup(): BackupFile {
     profiles,
     visits,
     progress,
+    learned,
     settings,
   }
 }
@@ -330,6 +460,12 @@ export function restoreBackup(raw: string): { ok: boolean; message: string } {
     write(K.visits(profile.id), merged)
     if (data.progress?.[profile.id]) {
       write(K.progress(profile.id), data.progress[profile.id])
+    }
+    if (data.learned?.[profile.id]) {
+      const current = loadLearnedFacts(profile.id)
+      const learnedById = new Map(current.map((f) => [f.id, f]))
+      for (const f of data.learned[profile.id]) learnedById.set(f.id, f)
+      write(K.learned(profile.id), Array.from(learnedById.values()))
     }
   }
 

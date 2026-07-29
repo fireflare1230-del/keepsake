@@ -16,9 +16,18 @@
   }
 
   body {
-    @apply bg-cream text-ink text-base;
+    @apply text-ink text-base;
     margin: 0;
     min-height: 100vh;
+    /* A warm, quiet atmosphere instead of a flat wall of cream:
+       three soft color washes (amber sunrise, sage, dusty blue) that
+       stay far below "busy" (NFR-3 allows gradients, not patterns). */
+    background-color: #faf6f0;
+    background-image:
+      radial-gradient(70rem 45rem at 112% -12%, rgba(232, 160, 76, 0.14), transparent 62%),
+      radial-gradient(55rem 40rem at -18% 18%, rgba(143, 179, 154, 0.16), transparent 60%),
+      radial-gradient(60rem 48rem at 50% 125%, rgba(94, 147, 172, 0.1), transparent 62%);
+    background-attachment: fixed;
   }
 
   /* Visible focus for keyboard users everywhere (NFR-4) */
@@ -47,8 +56,48 @@
     @apply text-ink;
     font-family: 'Fraunces', Georgia, 'Times New Roman', serif;
     font-weight: 600;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.015em;
     text-wrap: balance;
+  }
+}
+
+@layer components {
+  /* Small warm section label above a heading */
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #8a5a1d; /* amber-deep */
+  }
+  .eyebrow::before {
+    content: '';
+    width: 1.6rem;
+    height: 3px;
+    border-radius: 2px;
+    background: #e8a04c;
+  }
+
+  /* A hand-highlighter swash behind a key phrase */
+  .highlight {
+    background-image: linear-gradient(
+      180deg,
+      transparent 58%,
+      rgba(232, 160, 76, 0.45) 58%,
+      rgba(232, 160, 76, 0.45) 94%,
+      transparent 94%
+    );
+    border-radius: 4px;
+  }
+
+  /* An accent word in Fraunces italic */
+  .accent-word {
+    font-family: 'Fraunces', Georgia, serif;
+    font-style: italic;
+    color: #3e6e86; /* brand-deep */
   }
 }
 
@@ -71,6 +120,56 @@
     to {
       opacity: 1;
       transform: translateY(0);
+    }
+  }
+
+  /* Lane's bubble arrives with a soft, unhurried scale-in */
+  .bubble-in {
+    animation: bubbleIn 0.4s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+    transform-origin: top left;
+  }
+  @keyframes bubbleIn {
+    from {
+      opacity: 0;
+      transform: translateY(6px) scale(0.97);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  /* Staggered entrance for card lists (caretaker dashboard) */
+  .stagger-in > * {
+    animation: stepEnter 0.5s ease-out both;
+  }
+  .stagger-in > *:nth-child(2) { animation-delay: 0.07s; }
+  .stagger-in > *:nth-child(3) { animation-delay: 0.14s; }
+  .stagger-in > *:nth-child(4) { animation-delay: 0.21s; }
+  .stagger-in > *:nth-child(5) { animation-delay: 0.28s; }
+
+  /* Gentle celebration on the done step: petals drifting, never bursting */
+  .petal {
+    position: absolute;
+    top: 100%;
+    animation: petalFloat linear infinite;
+    pointer-events: none;
+    user-select: none;
+  }
+  @keyframes petalFloat {
+    0% {
+      opacity: 0;
+      transform: translateY(0) rotate(0deg);
+    }
+    12% {
+      opacity: 0.85;
+    }
+    88% {
+      opacity: 0.85;
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-85vh) rotate(38deg);
     }
   }
 

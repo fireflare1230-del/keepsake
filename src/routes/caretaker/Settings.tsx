@@ -15,9 +15,11 @@ import {
 import { friendlyDateTime } from '../../lib/dates'
 import { hashPin } from '../../lib/pin'
 import { canSpeak, listVoices, speak, whenVoicesReady } from '../../lib/speech'
+import { downloadReminderIcs } from '../../lib/reminder'
 import {
   buildBackup,
   forgetApiKey,
+  getActiveProfile,
   loadSettings,
   restoreBackup,
   saveSettings,
@@ -42,6 +44,11 @@ export default function Settings() {
 
   const [backupMessage, setBackupMessage] = useState('')
   const fileInput = useRef<HTMLInputElement>(null)
+
+  // Daily reminder + phone install (v1.3)
+  const [reminderTime, setReminderTime] = useState('10:00')
+  const [reminderMessage, setReminderMessage] = useState('')
+  const [copied, setCopied] = useState(false)
 
   // Voice picker (v1.1)
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([])
@@ -488,6 +495,98 @@ export default function Settings() {
         )}
       </section>
 
+      {/* --------------------------- daily reminder --------------------------- */}
+      <section className="card mt-6" aria-labelledby="reminder-heading">
+        <h2 id="reminder-heading" className="text-2xl">
+          Daily visit reminder
+        </h2>
+        <p className="mt-2 text-base text-ink-muted">
+          The gentlest way to build the ritual: a repeating reminder in your
+          phone&rsquo;s own calendar. Your phone delivers it reliably every
+          day, even when Keepsake isn&rsquo;t open. Pick a time, add it once,
+          done.
+        </p>
+        <div className="mt-5 flex flex-wrap items-end gap-3">
+          <div>
+            <label htmlFor="reminder-time" className="mb-1.5 block font-semibold text-ink">
+              Time each day
+            </label>
+            <input
+              id="reminder-time"
+              type="time"
+              value={reminderTime}
+              onChange={(e) => setReminderTime(e.target.value)}
+              className="min-h-[48px] rounded-lg border border-cream-deep bg-[#FFFDF9] px-4 py-3 text-base text-ink"
+            />
+          </div>
+          <Button
+            onClick={() => {
+              downloadReminderIcs(
+                reminderTime,
+                getActiveProfile()?.preferredName ?? 'your loved one'
+              )
+              setReminderMessage(
+                'Reminder downloaded. Open the file and your calendar will offer to add it. On a phone, it lands right in the calendar app.'
+              )
+            }}
+          >
+            Add to my calendar
+          </Button>
+        </div>
+        {reminderMessage && (
+          <p role="status" className="mt-4 rounded-lg bg-brand-wash px-4 py-3 text-brand-deeper">
+            {reminderMessage}
+          </p>
+        )}
+      </section>
+
+      {/* ------------------------- put it on your phone ------------------------ */}
+      <section className="card mt-6" aria-labelledby="install-heading">
+        <h2 id="install-heading" className="text-2xl">
+          Put Keepsake on your phone
+        </h2>
+        <p className="mt-2 text-base text-ink-muted">
+          Keepsake installs like a real app, icon on the home screen, full
+          screen, works offline. Open this address on the phone, then:
+        </p>
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <code className="rounded-lg bg-cream-soft px-4 py-2.5 text-base">
+            {window.location.origin + window.location.pathname}
+          </code>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              navigator.clipboard
+                ?.writeText(window.location.origin + window.location.pathname)
+                .then(() => {
+                  setCopied(true)
+                  setTimeout(() => setCopied(false), 2000)
+                })
+                .catch(() => {})
+            }}
+          >
+            {copied ? 'Copied ✓' : 'Copy address'}
+          </Button>
+        </div>
+        <ul className="mt-4 space-y-2 text-base text-ink-muted">
+          <li>
+            <strong className="text-ink">iPhone / iPad:</strong> open it in
+            Safari, tap the Share button, then &ldquo;Add to Home
+            Screen&rdquo;.
+          </li>
+          <li>
+            <strong className="text-ink">Android:</strong> open it in Chrome,
+            tap the ⋮ menu, then &ldquo;Install app&rdquo; (or &ldquo;Add to
+            Home screen&rdquo;).
+          </li>
+        </ul>
+        <p className="mt-3 text-base text-ink-faint">
+          Each device keeps its own data. Use the optional account above to
+          move profiles and visits between devices; photos stay on the device
+          that added them.
+        </p>
+      </section>
+
       {/* ---------------------------- data & backup ---------------------------- */}
       <section className="card mt-6" aria-labelledby="data-heading">
         <h2 id="data-heading" className="text-2xl">
@@ -496,7 +595,8 @@ export default function Settings() {
         <p className="mt-2 text-base text-ink-muted">
           Everything lives in this browser. Browsers occasionally clear
           storage, so download a backup now and then, these are precious
-          memories. Backups never include your API key.
+          memories. Backups never include your API key. Family photos stay on
+          this device and aren&rsquo;t part of the backup file.
         </p>
         <div className="mt-5 flex flex-wrap gap-3">
           <Button variant="secondary" onClick={downloadBackup}>

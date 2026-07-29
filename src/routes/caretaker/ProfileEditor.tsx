@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Button from '../../components/Button'
 import ChipListEditor from '../../components/ChipListEditor'
@@ -6,6 +6,14 @@ import { Field, TextArea } from '../../components/Field'
 import MusicEmbed from '../../components/MusicEmbed'
 import { extractVideoId } from '../../lib/youtube'
 import { backupToCloudQuietly } from '../../lib/cloud'
+import {
+  MAX_PHOTOS_PER_PROFILE,
+  addPhoto,
+  deletePhoto,
+  listPhotos,
+  updateCaption,
+  type PhotoMeta,
+} from '../../lib/photos'
 import { getActiveProfile, saveProfile, uid } from '../../lib/storage'
 import type { Favorites, MusicLink, Person } from '../../types'
 
@@ -292,6 +300,9 @@ export default function ProfileEditor() {
           )}
         </section>
 
+        {/* ------------------------------ photos ------------------------------ */}
+        <PhotoSection profileId={profile.id} />
+
         {/* --------------------------- favorite things ------------------------ */}
         <section className="card" aria-labelledby="favorites-heading">
           <h2 id="favorites-heading" className="text-2xl">
@@ -394,5 +405,147 @@ export default function ProfileEditor() {
         </Button>
       </div>
     </div>
+  )
+}
+
+/* ------------------------------ family photos ----------------------------- */
+
+interface PhotoWithUrl extends PhotoMeta {
+  url: string
+}
+
+/**
+ * Family photos (PDR v1.3 §1). Saved straight to IndexedDB as they are
+ * added, independent of the Save button, photos are files, not form
+ * fields, and losing one to an unsaved form would feel awful.
+ */
+function PhotoSection({ profileId }: { profileId: string }) {
+  const [photos, setPhotos] = useState<PhotoWithUrl[]>([])
+  const [busy, setBusy] = useState(false)
+  const [message, setMessage] = useState('')
+  const fileInput = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    let urls: string[] = []
+    listPhotos(profileId)
+      .then((stored) => {
+        const withUrls = stored.map(({ blob, ...meta }) => ({
+          ...meta,
+          url: URL.createObjectURL(blob),
+        }))
+        urls = withUrls.map((p) => p.url)
+        setPhotos(withUrls)
+      })
+      .catch(() => setMessage("Photos couldn't be loaded in this browser."))
+    return () => urls.forEach((url) => URL.revokeObjectURL(url))
+  }, [profileId])
+
+  async function onFilesPicked(files: FileList | null) {
+    if (!files?.length) return
+    setBusy(true)
+    setMessage('')
+    let added = 0
+    for (const file of Array.from(files)) {
+      if (photos.length + added >= MAX_PHOTOS_PER_PROFILE) {
+        setMessage(`That's the limit of ${MAX_PHOTOS_PER_PROFILE} photos. Remove one to add another.`)
+        break
+      }
+      if (!file.type.startsWith('image/')) continue
+      try {
+        const meta = await addPhoto(profileId, file, '')
+        setPhotos((list) => [
+          ...list,
+          { ...meta, url: URL.createObjectURL(file) },
+        ])
+        added++
+      } catch {
+        setMessage("That photo couldn't be saved. It may be too large for this device.")
+      }
+    }
+    setBusy(false)
+    if (fileInput.current) fileInput.current.value = ''
+  }
+
+  return (
+    <section className="card" aria-labelledby="photos-heading">
+      <h2 id="photos-heading" className="text-2xl">
+        Family photos
+      </h2>
+      <p className="mt-2 text-base text-ink-faint">
+        A wedding day, the old house, a favorite trip. One photo joins the
+        rotation as a special moment of a visit, with a warm caption Lane
+        reads aloud. Photos stay on this device only.
+      </p>
+
+      <div className="mt-5">
+        <input
+          ref={fileInput}
+          type="file"
+          accept="image/*"
+          multiple
+          className="hidden"
+          onChange={(e) => onFilesPicked(e.target.files)}
+        />
+        <Button
+          variant="secondary"
+          disabled={busy || photos.length >= MAX_PHOTOS_PER_PROFILE}
+          onClick={() => fileInput.current?.click()}
+        >
+          {busy ? 'Adding…' : '+ Add photos'}
+        </Button>
+        <span className="ml-3 text-base text-ink-faint">
+          {photos.length} of {MAX_PHOTOS_PER_PROFILE}
+        </span>
+      </div>
+      {message && (
+        <p role="alert" className="mt-3 rounded-lg bg-rust-wash px-4 py-3 text-rust-deep">
+          {message}
+        </p>
+      )}
+
+      {photos.length > 0 && (
+        <ul className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {photos.map((photo) => (
+            <li
+              key={photo.id}
+              className="overflow-hidden rounded-lg border border-cream-deep bg-cream-soft/50"
+            >
+              <img
+                src={photo.url}
+                alt={photo.caption || 'Family photo'}
+                className="h-44 w-full object-cover"
+              />
+              <div className="p-3">
+                <Field
+                  label="Caption Lane shares"
+                  value={photo.caption}
+                  placeholder="Your wedding day, 1972"
+                  onChange={(e) => {
+                    const caption = e.target.value
+                    setPhotos((list) =>
+                      list.map((p) => (p.id === photo.id ? { ...p, caption } : p))
+                    )
+                  }}
+                  onBlur={() => updateCaption(photo.id, photo.caption).catch(() => {})}
+                />
+                <div className="mt-2 text-right">
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      deletePhoto(photo.id).catch(() => {})
+                      URL.revokeObjectURL(photo.url)
+                      setPhotos((list) => list.filter((p) => p.id !== photo.id))
+                    }}
+                    aria-label="Remove this photo"
+                  >
+                    Remove
+                  </Button>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   )
 }

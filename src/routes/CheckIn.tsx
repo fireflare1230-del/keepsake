@@ -12,7 +12,9 @@ import {
   buildVisitSummary,
   nextLaneTurn,
 } from '../features/lane/conversation'
+import { milestoneFor } from '../features/checkin/milestones'
 import { pickMoment } from '../features/checkin/moments'
+import { listPhotos, type PhotoMeta } from '../lib/photos'
 import { timeGreeting } from '../lib/dates'
 import { canListen, canSpeak, createListener, speak, stopSpeaking } from '../lib/speech'
 import {
@@ -99,11 +101,35 @@ function VisitFlow({ profile, preview }: { profile: Profile; preview: boolean })
   const fact = profile.factsToReinforce.length
     ? profile.factsToReinforce[completedCount % profile.factsToReinforce.length]
     : undefined
-  // Today's special moment rotates: a favorite song one visit, their team
-  // or a favorite food/show the next (v1.1).
+
+  // Family photos (v1.3) live in IndexedDB; load once per visit and keep
+  // object URLs alive for the duration.
+  const [photos, setPhotos] = useState<PhotoMeta[]>([])
+  const photoUrls = useRef(new Map<string, string>())
+  useEffect(() => {
+    let cancelled = false
+    listPhotos(profile.id)
+      .then((stored) => {
+        if (cancelled) return
+        for (const photo of stored) {
+          photoUrls.current.set(photo.id, URL.createObjectURL(photo.blob))
+        }
+        setPhotos(stored.map(({ blob: _blob, ...meta }) => meta))
+      })
+      .catch(() => {})
+    const urls = photoUrls.current
+    return () => {
+      cancelled = true
+      urls.forEach((url) => URL.revokeObjectURL(url))
+      urls.clear()
+    }
+  }, [profile.id])
+
+  // Today's special moment rotates: a favorite song one visit, a photo
+  // or their team or a favorite food/show the next (v1.1, photos v1.3).
   const moment = useMemo(
-    () => pickMoment(profile, completedCount),
-    [profile, completedCount]
+    () => pickMoment(profile, completedCount, photos),
+    [profile, completedCount, photos]
   )
   const person = profile.family.length
     ? profile.family[completedCount % profile.family.length]
@@ -584,6 +610,50 @@ function VisitFlow({ profile, preview }: { profile: Profile; preview: boolean })
         </div>
       )}
 
+      {step === 'moment' && moment?.kind === 'photo' && (
+        <div className="step-enter mt-10">
+          <h1 className="text-center text-4xl">A picture for you 💛</h1>
+          <div className="mx-auto mt-8 max-w-xl">
+            {photoUrls.current.get(moment.photo.id) && (
+              <img
+                src={photoUrls.current.get(moment.photo.id)}
+                alt={moment.photo.caption || 'A family photo'}
+                className="mx-auto max-h-[46vh] w-auto rounded-xl border-8 border-[#FFFDF9] shadow-lift"
+              />
+            )}
+            <div className="mt-6">
+              <LaneBubble large showSpeaker={showSpeaker} text={moment.share} />
+            </div>
+            {momentAck && (
+              <div className="mt-5">
+                <LaneBubble large showSpeaker={false} text={momentAck} />
+              </div>
+            )}
+          </div>
+          {!momentAck && (
+            <div className="mt-10 flex flex-wrap justify-center gap-3">
+              {moment.chips.map((chip) => (
+                <Chip
+                  key={chip.label}
+                  onClick={() => {
+                    patientSays(chip.label)
+                    laneSays(chip.ack)
+                    setMomentAck(chip.ack)
+                  }}
+                >
+                  {chip.label}
+                </Chip>
+              ))}
+            </div>
+          )}
+          <div className="mt-8 text-center">
+            <Button size="xl" onClick={next}>
+              {person ? 'One more thing →' : 'Finish the visit →'}
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* -------------------------------- family -------------------------------- */}
       {step === 'family' && person && (
         <div className="step-enter mt-10">
@@ -621,7 +691,8 @@ function VisitFlow({ profile, preview }: { profile: Profile; preview: boolean })
 
       {/* --------------------------------- done --------------------------------- */}
       {step === 'done' && (
-        <div className="step-enter mt-14 text-center">
+        <div className="step-enter relative mt-14 text-center">
+          <Petals />
           <span aria-hidden="true" className="text-7xl">🌻</span>
           <h1 className="mt-6 text-4xl md:text-5xl">
             That was a lovely visit, {profile.preferredName}.
@@ -637,6 +708,20 @@ function VisitFlow({ profile, preview }: { profile: Profile; preview: boolean })
               </p>
             </div>
           )}
+          {!preview &&
+            streakResult &&
+            (() => {
+              const milestone = milestoneFor(streakResult.currentStreak)
+              return milestone ? (
+                <div className="step-enter mx-auto mt-5 max-w-sm rounded-xl border-2 border-amber/60 bg-[#FFFDF9] px-8 py-6 shadow-lift">
+                  <span aria-hidden="true" className="text-5xl">
+                    {milestone.emoji}
+                  </span>
+                  <p className="mt-2 text-2xl font-bold">{milestone.title}</p>
+                  <p className="mt-1.5 text-lg text-ink-muted">{milestone.line}</p>
+                </div>
+              ) : null
+            })()}
           {preview && (
             <p className="mx-auto mt-6 max-w-md text-lg text-ink-muted">
               (Preview, nothing was saved, and the streak wasn&rsquo;t touched.)
@@ -655,6 +740,45 @@ function VisitFlow({ profile, preview }: { profile: Profile; preview: boolean })
 }
 
 /* ============================== little pieces ============================== */
+
+/**
+ * The done-step celebration: a few petals and leaves drifting slowly
+ * upward. Gentle on purpose, confetti bursts read as noise here.
+ * Fixed positions/timings (no randomness) so it renders identically
+ * every visit and never distracts.
+ */
+const PETALS = [
+  { emoji: '🌻', left: '6%', delay: '0s', duration: '11s', size: '1.4rem' },
+  { emoji: '🍃', left: '22%', delay: '2.5s', duration: '13s', size: '1.1rem' },
+  { emoji: '💛', left: '46%', delay: '5s', duration: '12s', size: '1rem' },
+  { emoji: '🌼', left: '68%', delay: '1.2s', duration: '14s', size: '1.2rem' },
+  { emoji: '🍂', left: '84%', delay: '3.8s', duration: '12.5s', size: '1.1rem' },
+  { emoji: '🌻', left: '94%', delay: '6.5s', duration: '13.5s', size: '1rem' },
+]
+
+function Petals() {
+  return (
+    <div
+      aria-hidden="true"
+      className="pointer-events-none fixed inset-0 overflow-hidden"
+    >
+      {PETALS.map((petal, index) => (
+        <span
+          key={index}
+          className="petal"
+          style={{
+            left: petal.left,
+            animationDelay: petal.delay,
+            animationDuration: petal.duration,
+            fontSize: petal.size,
+          }}
+        >
+          {petal.emoji}
+        </span>
+      ))}
+    </div>
+  )
+}
 
 function Shell({
   children,
@@ -708,7 +832,7 @@ function LaneBubble({
       <div className="min-w-0">
         <div
           className={
-            'rounded-xl rounded-tl-sm bg-brand-wash px-5 py-3.5 text-ink ' +
+            'bubble-in rounded-xl rounded-tl-sm bg-brand-wash px-5 py-3.5 text-ink ' +
             (large ? 'text-2xl leading-relaxed' : 'text-xl')
           }
         >

@@ -1,14 +1,18 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import Button from '../../components/Button'
+import { THEMES } from '../../data/themes'
+import { earnedMilestones } from '../../features/checkin/milestones'
 import { timeGreeting } from '../../lib/dates'
 import {
   getActiveProfile,
+  loadLearnedFacts,
   loadProgress,
   loadSettings,
   loadVisits,
 } from '../../lib/storage'
 import DashboardInsights from './DashboardInsights'
+import LaneNoticed from './LaneNoticed'
 
 /**
  * Caretaker home: a quick-start checklist while setting up (FR-22),
@@ -17,7 +21,10 @@ import DashboardInsights from './DashboardInsights'
 
 export default function Dashboard() {
   const navigate = useNavigate()
-  const profile = getActiveProfile()
+  // Bumped when an approved "Lane noticed" fact changes the profile, so
+  // the checklist and insights below re-read fresh data.
+  const [refresh, setRefresh] = useState(0)
+  const profile = useMemo(() => getActiveProfile(), [refresh])
 
   const data = useMemo(() => {
     if (!profile) return undefined
@@ -27,6 +34,7 @@ export default function Dashboard() {
       completed: visits.filter((v) => v.completed),
       progress: loadProgress(profile.id),
       settings: loadSettings(),
+      learnedCount: loadLearnedFacts(profile.id).length,
     }
   }, [profile])
 
@@ -80,7 +88,7 @@ export default function Dashboard() {
   const setupComplete = coreItems.every((item) => item.done)
 
   return (
-    <div className="py-8">
+    <div className="stagger-in py-8">
       <h1 className="text-3xl">
         {timeGreeting()}, here&rsquo;s {profile.preferredName}&rsquo;s Keepsake.
       </h1>
@@ -147,6 +155,61 @@ export default function Dashboard() {
               </li>
             ))}
           </ul>
+        </section>
+      )}
+
+      {/* ------------------- "Lane noticed" review inbox ------------------- */}
+      {(data.completed.length > 0 || data.learnedCount > 0) && (
+        <LaneNoticed
+          key={refresh}
+          profile={profile}
+          hasApiKey={Boolean(data.settings.apiKey)}
+          onChanged={() => setRefresh((n) => n + 1)}
+        />
+      )}
+
+      {/* --------------------------- keepsake shelf ------------------------- */}
+      {data.completed.length > 0 && (
+        <section className="card mt-8" aria-labelledby="shelf-heading">
+          <h2 id="shelf-heading" className="text-2xl">
+            The keepsake shelf
+          </h2>
+          <p className="mt-2 text-base text-ink-muted">
+            Every visit leaves a little memento. A quiet record that the
+            ritual is alive.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {data.completed.slice(0, 21).map((visit) => (
+              <span
+                key={visit.id}
+                title={`${visit.theme} · ${new Date(visit.date).toLocaleDateString()}`}
+                className="flex h-11 w-11 items-center justify-center rounded-lg bg-cream-soft text-2xl shadow-card"
+              >
+                {THEMES.find((t) => t.name === visit.theme)?.emoji ?? '💛'}
+              </span>
+            ))}
+            {data.completed.length > 21 && (
+              <span className="flex h-11 items-center px-2 text-base text-ink-faint">
+                +{data.completed.length - 21} more
+              </span>
+            )}
+          </div>
+          {earnedMilestones(data.progress.longestStreak).length > 0 && (
+            <div className="mt-5 border-t border-cream-deep pt-4">
+              <p className="text-base font-semibold text-ink-muted">Milestones</p>
+              <div className="mt-2 flex flex-wrap gap-3">
+                {earnedMilestones(data.progress.longestStreak).map((m) => (
+                  <span
+                    key={m.days}
+                    className="inline-flex items-center gap-2 rounded-full bg-amber-wash px-4 py-2 font-semibold text-amber-deep"
+                  >
+                    <span aria-hidden="true">{m.emoji}</span>
+                    {m.days} days
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </section>
       )}
 

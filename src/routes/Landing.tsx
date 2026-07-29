@@ -41,26 +41,33 @@ export default function Landing() {
       <section className="mx-auto max-w-5xl px-6 pb-16 pt-10 md:pt-16">
         <div className="grid items-center gap-12 md:grid-cols-[1.1fr_1fr]">
           <div>
-            <p className="mb-4 inline-block rounded-full bg-brand-wash px-4 py-1.5 font-semibold text-brand-deeper">
+            <p className="mb-5 inline-block rounded-full bg-brand-wash px-4 py-1.5 font-semibold text-brand-deeper">
               Reconnect. Remember.
             </p>
-            <h1 className="text-4xl font-bold md:text-5xl">
-              Help your loved one remember the moments that matter.
+            <h1 className="text-4xl font-bold leading-[1.15] md:text-5xl">
+              Help your loved one remember the{' '}
+              <span className="highlight">moments that matter</span>.
             </h1>
-            <p className="mt-5 max-w-xl text-lg text-ink-muted">
-              A short daily visit with Lane, a gentle companion who shares
-              memories instead of testing them.
+            <p className="mt-6 max-w-xl text-xl leading-relaxed text-ink-muted">
+              A short daily visit with Lane, a gentle companion who{' '}
+              <span className="accent-word">shares</span> memories instead of
+              testing them.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-4">
               <Button size="lg" onClick={start}>
                 {hasProfiles ? "Start today's visit" : 'Get started'} →
               </Button>
-              <a
-                href="#how-it-works"
-                className="font-semibold text-brand-deep underline-offset-4 hover:underline"
+              {/* A plain #anchor href fights the HashRouter, so scroll directly */}
+              <button
+                onClick={() =>
+                  document
+                    .getElementById('how-it-works')
+                    ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                }
+                className="min-h-[48px] font-semibold text-brand-deep underline-offset-4 hover:underline"
               >
-                See how it works
-              </a>
+                See how it works ↓
+              </button>
             </div>
             <p className="mt-6 text-base text-ink-faint">
               Free · Private · Works with or without an AI key
@@ -81,7 +88,7 @@ export default function Landing() {
               </div>
               <div className="mt-5 flex flex-wrap justify-end gap-2.5">
                 <MockChip>It sure was</MockChip>
-                <MockChip>We had sweet tea</MockChip>
+                <MockChip>That sounds like home</MockChip>
                 <MockChip muted>Tell me more</MockChip>
               </div>
               <div className="mt-5 flex items-center gap-2 border-t border-cream-deep pt-4 text-base text-ink-faint">
@@ -187,6 +194,7 @@ export default function Landing() {
                   'Never quizzes, never corrects',
                   'Big tap-able answers, nothing to get wrong',
                   'Rewards showing up, never scores memory',
+                  'Learns their favorites over time, you approve every one',
                   'Everything stays on your device',
                 ].map((line) => (
                   <li key={line} className="flex items-start gap-3">
@@ -243,7 +251,7 @@ export default function Landing() {
             healthcare providers for medical concerns.
           </p>
           <p className="mt-4 text-base text-ink-faint">
-            Reconnect. Remember. ·{' '}
+            Reconnect. Remember. · v1.2 ·{' '}
             <Link to="/care" className="underline underline-offset-4">
               Caretaker area
             </Link>

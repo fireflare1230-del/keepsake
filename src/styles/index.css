@@ -3,42 +3,46 @@
 @tailwind utilities;
 
 /* ---------------------------------------------------------------------------
-   Keepsake global styles
-   Warm, calm, elderly-friendly (PRD §10.1): 18px+ body text, soft cream
-   background (never pure white), generous spacing, always-visible focus.
+   Keepsake global styles, v2.0 "Family Album".
+   The whole app is a scrapbook someone's daughter could have glued
+   together at the kitchen table: album paper, photo-white cards, washi
+   tape, handwritten margins, leather-brown actions. Warm, calm, and
+   elderly-friendly as ever (PRD §10.1): 18px+ text, generous spacing,
+   always-visible focus.
 --------------------------------------------------------------------------- */
 
 @layer base {
   html {
-    @apply bg-cream text-ink antialiased;
+    @apply antialiased;
+    color: #3a2d22; /* warm walnut ink, replaces the old blue-ink */
     font-family: 'Atkinson Hyperlegible', system-ui, -apple-system, 'Segoe UI',
       Roboto, sans-serif;
+    background-color: #efe6d8;
   }
 
   body {
-    @apply text-ink text-base;
+    @apply text-base;
+    color: #3a2d22;
     margin: 0;
     min-height: 100vh;
-    /* A warm, quiet atmosphere instead of a flat wall of cream:
-       three soft color washes (amber sunrise, sage, dusty blue) that
-       stay far below "busy" (NFR-3 allows gradients, not patterns). */
-    background-color: #faf6f0;
+    /* Album paper: a faint ruled grain, never noise images, so it stays
+       crisp at every DPI and costs zero bytes. */
+    background-color: #efe6d8;
     background-image:
-      radial-gradient(70rem 45rem at 112% -12%, rgba(232, 160, 76, 0.14), transparent 62%),
-      radial-gradient(55rem 40rem at -18% 18%, rgba(143, 179, 154, 0.16), transparent 60%),
-      radial-gradient(60rem 48rem at 50% 125%, rgba(94, 147, 172, 0.1), transparent 62%);
+      repeating-linear-gradient(0deg, rgba(120, 90, 60, 0.028) 0 2px, transparent 2px 26px),
+      radial-gradient(90rem 60rem at 50% -25%, #f7f0e4, transparent 70%);
     background-attachment: fixed;
   }
 
   /* Visible focus for keyboard users everywhere (NFR-4) */
   :focus-visible {
-    outline: 3px solid #3e6e86;
+    outline: 3px solid #8a4b2a;
     outline-offset: 3px;
     border-radius: 6px;
   }
 
   ::selection {
-    background: #e8a04c66;
+    background: rgba(212, 183, 120, 0.55);
   }
 
   /* Calm > slick: honor users who turn animations off */
@@ -53,7 +57,7 @@
   }
 
   h1, h2, h3, h4 {
-    @apply text-ink;
+    color: #3a2d22;
     font-family: 'Fraunces', Georgia, 'Times New Roman', serif;
     font-weight: 600;
     letter-spacing: -0.015em;
@@ -71,76 +75,75 @@
     font-weight: 700;
     letter-spacing: 0.16em;
     text-transform: uppercase;
-    color: #8a5a1d; /* amber-deep */
+    color: #8a4b2a; /* pen ink */
   }
   .eyebrow::before {
     content: '';
     width: 1.6rem;
     height: 3px;
     border-radius: 2px;
-    background: #e8a04c;
+    background: #a06b3a;
   }
 
-  /* A hand-highlighter swash behind a key phrase */
+  /* A hand-highlighter swash behind a key phrase, in washi gold */
   .highlight {
     background-image: linear-gradient(
       180deg,
       transparent 58%,
-      rgba(232, 160, 76, 0.45) 58%,
-      rgba(232, 160, 76, 0.45) 94%,
+      rgba(212, 183, 120, 0.6) 58%,
+      rgba(212, 183, 120, 0.6) 94%,
       transparent 94%
     );
     border-radius: 4px;
   }
 
-  /* An accent word in Fraunces italic */
+  /* An accent word in Fraunces italic, pen-ink colored */
   .accent-word {
     font-family: 'Fraunces', Georgia, serif;
     font-style: italic;
-    color: #3e6e86; /* brand-deep */
+    color: #8a4b2a;
   }
-}
 
-@layer components {
+  /* ---------------------- album craft classes (v2.0) ------------------- */
+
+  /* Handwriting, for captions, annotations, and margin notes. */
+  .hand {
+    font-family: 'Segoe Script', 'Bradley Hand', 'Comic Sans MS', cursive;
+  }
+
+  /* A strip of washi tape; position absolutely where needed. */
+  .tape {
+    position: absolute;
+    width: 92px;
+    height: 26px;
+    background: rgba(212, 183, 120, 0.6);
+    box-shadow: inset 0 0 6px rgba(120, 90, 40, 0.25);
+    pointer-events: none;
+  }
+
+  /* The dashed stitching that frames album pages. */
+  .stitched {
+    border: 2px dashed #c9b493;
+  }
+
+  /* A photo mounted like a polaroid. */
+  .polaroid {
+    background: #fffdf6;
+    padding: 12px 12px 40px;
+    box-shadow: 0 10px 26px -8px rgba(61, 47, 36, 0.45);
+  }
+
   /* -------------------------------------------------------------------
-     v1.4 motion system. Big where the audience is (landing, caretaker),
-     calm where it matters (the visit). Everything honors
-     prefers-reduced-motion via the global rule above.
+     Motion system (v1.4, re-tuned for paper). Big where the audience
+     is, calm where it matters. Honors prefers-reduced-motion globally.
   ------------------------------------------------------------------- */
 
-  /* Route-level entrance: every page arrives with a soft rise. */
   .route-enter {
     animation: routeEnter 0.5s cubic-bezier(0.22, 0.9, 0.3, 1) both;
   }
   @keyframes routeEnter {
     from { opacity: 0; transform: translateY(14px); }
     to   { opacity: 1; transform: translateY(0); }
-  }
-
-  /* The landing hero's slow-breathing aurora. GPU-cheap: two blurred
-     radial layers drifting on transform only. */
-  .aurora {
-    position: absolute;
-    inset: -20%;
-    pointer-events: none;
-    filter: blur(60px);
-    opacity: 0.55;
-  }
-  .aurora-a {
-    background:
-      radial-gradient(38rem 30rem at 22% 30%, rgba(232, 160, 76, 0.5), transparent 65%),
-      radial-gradient(30rem 26rem at 80% 15%, rgba(143, 179, 154, 0.45), transparent 62%);
-    animation: auroraDrift 26s ease-in-out infinite alternate;
-  }
-  .aurora-b {
-    background:
-      radial-gradient(34rem 30rem at 75% 75%, rgba(94, 147, 172, 0.38), transparent 64%),
-      radial-gradient(26rem 22rem at 12% 85%, rgba(197, 106, 83, 0.22), transparent 60%);
-    animation: auroraDrift 32s ease-in-out infinite alternate-reverse;
-  }
-  @keyframes auroraDrift {
-    from { transform: translate3d(-3%, -2%, 0) scale(1); }
-    to   { transform: translate3d(3%, 4%, 0) scale(1.12); }
   }
 
   /* Hero headline: words rise one by one. Apply .word with --i set. */
@@ -179,7 +182,7 @@
     height: 1.1em;
     margin-left: 2px;
     vertical-align: text-bottom;
-    background: #3e6e86;
+    background: #8a4b2a;
     animation: caretBlink 0.9s steps(1) infinite;
   }
   @keyframes caretBlink {
@@ -209,7 +212,7 @@
     width: 6px;
     height: 74px;
     border-radius: 3px;
-    background: linear-gradient(to top, rgba(232, 160, 76, 0), rgba(232, 160, 76, 0.55));
+    background: linear-gradient(to top, rgba(212, 183, 120, 0), rgba(200, 150, 70, 0.6));
     transform-origin: 50% 100%;
     animation: rayPulse 3.2s ease-in-out infinite;
   }
@@ -218,10 +221,13 @@
     50%      { opacity: 0.9;  transform: rotate(var(--angle)) scaleY(1.06); }
   }
 
-  /* Soft card, the basic surface of the whole app */
+  /* Soft card, the basic surface of the whole app: photo-white paper
+     with a gentle lift, like a print resting on the album page. */
   .card {
-    @apply rounded-xl bg-white/70 shadow-card border border-cream-deep p-6;
-    background-color: #fffdf9; /* softened white, still not #fff glare on cream */
+    @apply rounded-xl p-6;
+    background-color: #fffdf6;
+    border: 1px solid #dcccb0;
+    box-shadow: 3px 4px 0 rgba(61, 47, 36, 0.1);
   }
 
   /* Gentle fade-and-rise used when a new step appears in the visit flow */
@@ -236,22 +242,6 @@
     to {
       opacity: 1;
       transform: translateY(0);
-    }
-  }
-
-  /* Lane's bubble arrives with a soft, unhurried scale-in */
-  .bubble-in {
-    animation: bubbleIn 0.4s cubic-bezier(0.2, 0.8, 0.3, 1) both;
-    transform-origin: top left;
-  }
-  @keyframes bubbleIn {
-    from {
-      opacity: 0;
-      transform: translateY(6px) scale(0.97);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0) scale(1);
     }
   }
 
@@ -291,7 +281,8 @@
 
   /* Lane is "thinking", three soft dots, slow and unhurried */
   .thinking-dot {
-    @apply inline-block h-2.5 w-2.5 rounded-full bg-brand;
+    @apply inline-block h-2.5 w-2.5 rounded-full;
+    background-color: #a06b3a;
     animation: thinking 1.6s ease-in-out infinite;
   }
   .thinking-dot:nth-child(2) { animation-delay: 0.25s; }
@@ -300,124 +291,78 @@
     0%, 70%, 100% { opacity: 0.25; transform: translateY(0); }
     35% { opacity: 1; transform: translateY(-3px); }
   }
+
+  /* Lane's bubble arrives with a soft, unhurried scale-in */
+  .bubble-in {
+    animation: bubbleIn 0.4s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+    transform-origin: top left;
+  }
+  @keyframes bubbleIn {
+    from {
+      opacity: 0;
+      transform: translateY(6px) scale(0.97);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
 }
 
 /* ---------------------------------------------------------------------------
-   Design packs (v1.5). Three complete looks, switched by [data-design]
-   on <html>. Hearth is the default (no attribute). Each pack re-skins
-   the highest-visibility surfaces: page light, cards, primary action,
-   Lane's bubble, washes, highlight, aurora, and the evergreen panel.
+   Family Album re-skin of the compiled utility tokens (v2.0). The old
+   palette classes stay in the markup; these overrides repaint them in
+   album materials so every screen, patient and caretaker alike, sits
+   in the same scrapbook. Contrast pairs kept AA-safe on paper.
 --------------------------------------------------------------------------- */
 
-/* ------------------------------- DUSK ------------------------------------ */
-[data-design='dusk'] body {
-  background-color: #f6f2f7;
-  background-image:
-    radial-gradient(70rem 45rem at 112% -12%, rgba(217, 164, 65, 0.13), transparent 62%),
-    radial-gradient(55rem 40rem at -18% 18%, rgba(138, 107, 154, 0.16), transparent 60%),
-    radial-gradient(60rem 48rem at 50% 125%, rgba(197, 106, 131, 0.09), transparent 62%);
-}
-[data-design='dusk'] .card {
-  background-color: #fcfafd;
-  border-color: #e7dfea;
-}
-[data-design='dusk'] .bg-amber { background-color: #d9a441; }
-[data-design='dusk'] .bg-amber-wash { background-color: #f5ebd9; }
-[data-design='dusk'] .text-amber-deep { color: #7a5a15; }
-[data-design='dusk'] .border-amber\/50 { border-color: rgba(217, 164, 65, 0.5); }
-[data-design='dusk'] .bg-brand { background-color: #8a6b9a; }
-[data-design='dusk'] .bg-brand-wash,
-[data-design='dusk'] .hover\:bg-brand-wash:hover { background-color: #efe8f2; }
-[data-design='dusk'] .text-brand-deep { color: #6b4e7d; }
-[data-design='dusk'] .text-brand-deeper { color: #533c63; }
-[data-design='dusk'] .border-brand { border-color: #8a6b9a; }
-[data-design='dusk'] .border-brand\/40 { border-color: rgba(138, 107, 154, 0.4); }
-[data-design='dusk'] .hover\:border-brand:hover { border-color: #8a6b9a; }
-[data-design='dusk'] .bg-sage-wash { background-color: #e8eaf1; }
-[data-design='dusk'] .text-sage-deep { color: #4a5578; }
-[data-design='dusk'] .bg-cream-soft,
-[data-design='dusk'] .hover\:bg-cream-soft:hover { background-color: #f1ebf2; }
-[data-design='dusk'] .bg-cream-deep { background-color: #e3dae6; }
-[data-design='dusk'] .border-cream-deep { border-color: #e3dae6; }
-[data-design='dusk'] .bg-evergreen { background-color: #352a42; }
-[data-design='dusk'] .highlight {
-  background-image: linear-gradient(
-    180deg,
-    transparent 58%,
-    rgba(217, 164, 65, 0.42) 58%,
-    rgba(217, 164, 65, 0.42) 94%,
-    transparent 94%
-  );
-}
-[data-design='dusk'] .eyebrow { color: #7a5a15; }
-[data-design='dusk'] .eyebrow::before { background: #d9a441; }
-[data-design='dusk'] .accent-word { color: #6b4e7d; }
-[data-design='dusk'] .demo-caret { background: #6b4e7d; }
-[data-design='dusk'] .thinking-dot { background-color: #8a6b9a; }
-[data-design='dusk'] .aurora-a {
-  background:
-    radial-gradient(38rem 30rem at 22% 30%, rgba(217, 164, 65, 0.42), transparent 65%),
-    radial-gradient(30rem 26rem at 80% 15%, rgba(138, 107, 154, 0.45), transparent 62%);
-}
-[data-design='dusk'] .aurora-b {
-  background:
-    radial-gradient(34rem 30rem at 75% 75%, rgba(197, 106, 131, 0.3), transparent 64%),
-    radial-gradient(26rem 22rem at 12% 85%, rgba(94, 106, 172, 0.22), transparent 60%);
-}
+/* Text inks: warm walnut family. */
+.text-ink { color: #3a2d22; }
+.text-ink-muted { color: #6b5947; }
+.text-ink-faint { color: #7d6c58; }
 
-/* ------------------------------ MEADOW ----------------------------------- */
-[data-design='meadow'] body {
-  background-color: #f4f7f1;
-  background-image:
-    radial-gradient(70rem 45rem at 112% -12%, rgba(232, 190, 80, 0.12), transparent 62%),
-    radial-gradient(55rem 40rem at -18% 18%, rgba(78, 125, 91, 0.14), transparent 60%),
-    radial-gradient(60rem 48rem at 50% 125%, rgba(208, 120, 80, 0.09), transparent 62%);
-}
-[data-design='meadow'] .card {
-  background-color: #fdfefb;
-  border-color: #e2e8dc;
-}
-[data-design='meadow'] .bg-amber { background-color: #de8b60; }
-[data-design='meadow'] .bg-amber-wash { background-color: #f9e9e0; }
-[data-design='meadow'] .text-amber-deep { color: #8f4b26; }
-[data-design='meadow'] .border-amber\/50 { border-color: rgba(222, 139, 96, 0.5); }
-[data-design='meadow'] .bg-brand { background-color: #6fa080; }
-[data-design='meadow'] .bg-brand-wash,
-[data-design='meadow'] .hover\:bg-brand-wash:hover { background-color: #e7f0e4; }
-[data-design='meadow'] .text-brand-deep { color: #3f6b4f; }
-[data-design='meadow'] .text-brand-deeper { color: #2f5340; }
-[data-design='meadow'] .border-brand { border-color: #6fa080; }
-[data-design='meadow'] .border-brand\/40 { border-color: rgba(111, 160, 128, 0.4); }
-[data-design='meadow'] .hover\:border-brand:hover { border-color: #6fa080; }
-[data-design='meadow'] .bg-sage-wash { background-color: #eaf0ea; }
-[data-design='meadow'] .bg-cream-soft,
-[data-design='meadow'] .hover\:bg-cream-soft:hover { background-color: #edf2e8; }
-[data-design='meadow'] .bg-cream-deep { background-color: #dfe7d8; }
-[data-design='meadow'] .border-cream-deep { border-color: #dfe7d8; }
-[data-design='meadow'] .highlight {
-  background-image: linear-gradient(
-    180deg,
-    transparent 58%,
-    rgba(222, 139, 96, 0.38) 58%,
-    rgba(222, 139, 96, 0.38) 94%,
-    transparent 94%
-  );
-}
-[data-design='meadow'] .eyebrow { color: #8f4b26; }
-[data-design='meadow'] .eyebrow::before { background: #de8b60; }
-[data-design='meadow'] .accent-word { color: #3f6b4f; }
-[data-design='meadow'] .demo-caret { background: #3f6b4f; }
-[data-design='meadow'] .thinking-dot { background-color: #6fa080; }
-[data-design='meadow'] .aurora-a {
-  background:
-    radial-gradient(38rem 30rem at 22% 30%, rgba(232, 190, 80, 0.4), transparent 65%),
-    radial-gradient(30rem 26rem at 80% 15%, rgba(78, 125, 91, 0.4), transparent 62%);
-}
-[data-design='meadow'] .aurora-b {
-  background:
-    radial-gradient(34rem 30rem at 75% 75%, rgba(208, 120, 80, 0.3), transparent 64%),
-    radial-gradient(26rem 22rem at 12% 85%, rgba(111, 160, 128, 0.28), transparent 60%);
-}
+/* Primary accent (was amber): washi brass for badges and washes. */
+.bg-amber { background-color: #d4b778; }
+.bg-amber-wash { background-color: #f3e8d2; }
+.text-amber-deep { color: #7a5220; }
+.border-amber\/50 { border-color: rgba(160, 107, 58, 0.5); }
+.border-amber\/60 { border-color: rgba(160, 107, 58, 0.6); }
+
+/* Brand (was dusty blue): leather brown and pen ink. */
+.bg-brand { background-color: #a06b3a; }
+.bg-brand-wash,
+.hover\:bg-brand-wash:hover { background-color: #f5ecd9; }
+.text-brand-deep { color: #8a4b2a; }
+.text-brand-deeper { color: #6e3a20; }
+.border-brand { border-color: #a06b3a; }
+.border-brand\/40 { border-color: rgba(160, 107, 58, 0.45); }
+.hover\:border-brand:hover { border-color: #a06b3a; }
+.bg-brand-deep { background-color: #8a4b2a; }
+.hover\:bg-brand-deeper:hover { background-color: #6e3a20; }
+
+/* Sage: pressed-leaf green. */
+.bg-sage-wash { background-color: #e9ead6; }
+.text-sage-deep { color: #5c6b45; }
+.border-sage\/50 { border-color: rgba(140, 150, 100, 0.5); }
+.bg-sage\/25 { background-color: rgba(140, 150, 100, 0.25); }
+.hover\:bg-sage\/25:hover { background-color: rgba(140, 150, 100, 0.25); }
+
+/* Cream surfaces: album paper family. */
+.bg-cream { background-color: #efe6d8; }
+.bg-cream-soft,
+.hover\:bg-cream-soft:hover { background-color: #f3ecdd; }
+.bg-cream-deep { background-color: #dfd2ba; }
+.border-cream-deep { border-color: #dcccb0; }
+.text-cream { color: #f7f0e4; }
+
+/* The dark panel (was evergreen): walnut leather cover. */
+.bg-evergreen { background-color: #3d2f24; }
+
+/* Moss (success) warmed slightly. */
+.bg-moss { background-color: #6f955f; }
+.bg-moss-wash { background-color: #eaf0e0; }
+.text-moss-deep { color: #43663a; }
+.text-moss { color: #6f955f; }
 
 /* ---------------------------------------------------------------------------
    Print styles, used by the caretaker report (one-tap printable summary).

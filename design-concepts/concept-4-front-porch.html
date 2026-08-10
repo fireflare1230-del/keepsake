@@ -1,0 +1,156 @@
+<meta charset="utf-8">
+<title>Concept 4 · Front Porch at Dusk</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
+    background: #223047;
+    background-image:
+      radial-gradient(60rem 40rem at 78% 8%, #35476380, transparent 60%),
+      radial-gradient(50rem 36rem at 10% 90%, #1a253780, transparent 60%);
+    color: #f2e9d8;
+    padding: 40px 24px 80px;
+  }
+  .board { max-width: 980px; margin: 0 auto; }
+  .concept-tag {
+    display: inline-block; background: #e8b45a; color: #223047;
+    font: 700 13px/1 'Segoe UI', sans-serif; letter-spacing: 0.22em; text-transform: uppercase;
+    padding: 8px 14px; border-radius: 4px;
+  }
+  h1 { font-size: 50px; font-weight: 400; margin: 18px 0 8px; color: #f6edda; }
+  h1 em { color: #e8b45a; }
+  .why { max-width: 640px; font-size: 17px; line-height: 1.7; color: #b9c2d4; }
+
+  .swatches { display: flex; gap: 10px; margin: 28px 0 46px; }
+  .sw { width: 74px; height: 74px; border-radius: 50%; position: relative; border: 2px solid #f2e9d833; }
+  .sw small { position: absolute; bottom: -24px; left: 50%; transform: translateX(-50%); font: italic 12px Georgia; color: #b9c2d4; white-space: nowrap; }
+
+  /* ------------ landing hero ------------ */
+  .hero {
+    background: linear-gradient(#2b3c58, #223047 70%);
+    border: 1px solid #4a5b78;
+    border-radius: 18px;
+    padding: 54px 56px 0;
+    position: relative; overflow: hidden;
+    box-shadow: 0 30px 80px -30px rgba(8, 12, 22, 0.8);
+  }
+  .stars span { position: absolute; width: 3px; height: 3px; border-radius: 50%; background: #f2e9d8; opacity: 0.7; }
+  .firefly { position: absolute; width: 6px; height: 6px; border-radius: 50%; background: #ffd97a; box-shadow: 0 0 12px 4px #ffd97a66; }
+  .hero-grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 40px; align-items: end; position: relative; }
+  .kicker { font: 700 12px 'Segoe UI', sans-serif; letter-spacing: 0.3em; text-transform: uppercase; color: #e8b45a; }
+  .hero h2 { font-size: 48px; line-height: 1.1; font-weight: 400; margin: 16px 0; color: #f6edda; }
+  .hero h2 em { font-style: italic; color: #e8b45a; }
+  .hero p { font-size: 17px; line-height: 1.7; color: #b9c2d4; max-width: 380px; }
+  .cta {
+    display: inline-block; margin: 26px 0 54px;
+    background: #e8b45a; color: #223047;
+    font: 700 17px inherit; padding: 15px 30px; border-radius: 8px;
+    box-shadow: 0 6px 30px -6px #e8b45a99;
+  }
+
+  /* porch scene, layered paper-cut silhouettes */
+  .scene { position: relative; height: 320px; }
+  .hill-far { position: absolute; bottom: 0; left: -30px; right: -30px; height: 110px; background: #1a2537; border-radius: 100% 100% 0 0 / 80px 80px 0 0; }
+  .porch { position: absolute; bottom: 0; right: 10px; width: 300px; height: 240px; }
+  .house { position: absolute; bottom: 0; right: 0; width: 260px; height: 190px; background: #141d2c; border-radius: 6px 6px 0 0; }
+  .roof { position: absolute; bottom: 186px; right: -14px; width: 288px; height: 44px; background: #0e1521; border-radius: 8px; transform: rotate(-2deg); }
+  .window {
+    position: absolute; width: 64px; height: 78px; right: 40px; bottom: 70px;
+    background: #ffd97a; border-radius: 40px 40px 6px 6px;
+    box-shadow: 0 0 40px 10px #ffd97a55; border: 4px solid #0e1521;
+  }
+  .window::after { content: ''; position: absolute; inset: 32px 0 auto 0; height: 4px; background: #0e1521; }
+  .window::before { content: ''; position: absolute; inset: 0 auto 0 28px; width: 4px; background: #0e1521; }
+  .chair { position: absolute; bottom: 0; right: 150px; font-size: 54px; filter: brightness(0.25) sepia(1) hue-rotate(180deg); }
+  .lamp-glow { position: absolute; bottom: 0; right: 20px; width: 220px; height: 140px; background: radial-gradient(closest-side, #ffd97a2e, transparent); }
+
+  /* ------------ visit screen ------------ */
+  .section-label { font: 700 12px 'Segoe UI', sans-serif; letter-spacing: 0.25em; text-transform: uppercase; color: #e8b45a; margin: 52px 0 16px; }
+  .tablet { background: #0e1521; border-radius: 26px; padding: 18px; max-width: 760px; box-shadow: 0 26px 70px -24px rgba(5, 8, 15, 0.9); }
+  .screen {
+    background: linear-gradient(#2b3c58, #26364f);
+    border-radius: 14px; padding: 38px 46px 44px; position: relative; overflow: hidden;
+  }
+  .screen .firefly { opacity: 0.8; }
+  .theme-lantern {
+    margin: 0 auto; width: fit-content; display: flex; align-items: center; gap: 10px;
+    background: #1a2537; border: 1px solid #4a5b78; border-radius: 999px;
+    padding: 10px 22px; font-size: 16px; color: #f2e9d8;
+  }
+  .theme-lantern .flame { width: 10px; height: 10px; border-radius: 50%; background: #ffd97a; box-shadow: 0 0 10px 3px #ffd97a66; }
+  .prompt {
+    margin: 30px auto 0; max-width: 560px; text-align: center;
+    font-size: 26px; line-height: 1.55; color: #f6edda;
+    text-shadow: 0 2px 20px rgba(10, 15, 25, 0.6);
+  }
+  .chips { display: flex; justify-content: center; flex-wrap: wrap; gap: 14px; margin-top: 32px; }
+  .chip {
+    font-size: 19px; color: #f2e9d8;
+    background: #1a2537; border: 1.5px solid #6b7c9c; border-radius: 999px;
+    padding: 14px 28px;
+  }
+  .chip.lit { background: #3d3423; border-color: #e8b45a; color: #ffe3a1; box-shadow: 0 0 24px -4px #e8b45a55; }
+  .hear { text-align: center; margin-top: 26px; font-style: italic; font-size: 15px; color: #8fa0bd; }
+
+  .footnote { margin-top: 40px; font-size: 15px; color: #b9c2d4; font-style: italic; max-width: 660px; line-height: 1.7; }
+</style>
+
+<div class="board">
+  <span class="concept-tag">Concept 4 of 4</span>
+  <h1>Front Porch <em>at Dusk</em></h1>
+  <p class="why">A storybook nightfall: paper-cut silhouettes of a house with one warm lit window, fireflies drifting, lamplight gold on deep evening blue. The only dark concept, and dark for a reason: evenings are the hard hours in dementia care (sundowning), and this palette is built to soothe them. Feels like the cover of a beloved children's book, painted by hand.</p>
+
+  <div class="swatches">
+    <div class="sw" style="background:#223047"><small>evening blue</small></div>
+    <div class="sw" style="background:#1a2537"><small>deep porch</small></div>
+    <div class="sw" style="background:#e8b45a"><small>lamplight</small></div>
+    <div class="sw" style="background:#ffd97a"><small>firefly</small></div>
+    <div class="sw" style="background:#f2e9d8"><small>moth cream</small></div>
+    <div class="sw" style="background:#8fa0bd"><small>dusk gray</small></div>
+  </div>
+
+  <div class="hero">
+    <div class="stars">
+      <span style="left:6%; top:12%"></span><span style="left:18%; top:6%"></span>
+      <span style="left:33%; top:16%"></span><span style="left:52%; top:8%"></span>
+      <span style="left:64%; top:20%"></span><span style="left:81%; top:10%"></span>
+      <span style="left:91%; top:26%"></span><span style="left:44%; top:26%"></span>
+    </div>
+    <span class="firefly" style="left:38%; top:52%"></span>
+    <span class="firefly" style="left:58%; top:38%; transform:scale(0.7)"></span>
+    <div class="hero-grid">
+      <div>
+        <div class="kicker">A companion for memory care</div>
+        <h2>Sit with them awhile,<br><em>every evening.</em></h2>
+        <p>A short daily visit with Lane, a gentle companion who shares memories instead of testing them. Softest at the hours that need it most.</p>
+        <span class="cta">Light the porch light →</span>
+      </div>
+      <div class="scene">
+        <div class="hill-far"></div>
+        <div class="lamp-glow"></div>
+        <div class="house"></div>
+        <div class="roof"></div>
+        <div class="window"></div>
+        <span class="chair">🪑</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-label">The visit, on the tablet</div>
+  <div class="tablet">
+    <div class="screen">
+      <span class="firefly" style="right:10%; top:18%"></span>
+      <span class="firefly" style="left:8%; bottom:22%; transform:scale(0.65)"></span>
+      <div class="theme-lantern"><span class="flame"></span> Tonight's memory: Music</div>
+      <p class="prompt">The music from when we are young stays with us forever. Did you like to sing, or were you more of a listener?</p>
+      <div class="chips">
+        <span class="chip lit">I liked to sing</span>
+        <span class="chip">More of a listener</span>
+        <span class="chip">I'm not sure</span>
+      </div>
+      <p class="hear">🔊 hear it in Lane's voice</p>
+    </div>
+  </div>
+
+  <p class="footnote">Why it works for judges: emotionally the strongest hook ("built for sundowning hours" is a line reviewers remember), completely distinct from every generic health app, and the silhouette illustration style is easy to keep consistent by hand. Risk: dark UIs need extra care for aging eyes, so a paired daytime mode would ship with it.</p>
+</div>

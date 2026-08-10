@@ -1,0 +1,164 @@
+<meta charset="utf-8">
+<title>Concept 2 · Radio Days</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: Georgia, serif;
+    background: #f4e7d3;
+    color: #33261c;
+    padding: 40px 24px 80px;
+  }
+  .board { max-width: 980px; margin: 0 auto; }
+  .concept-tag {
+    display: inline-block; background: #b3502d; color: #f9efdd;
+    font: 700 13px/1 'Segoe UI', sans-serif; letter-spacing: 0.22em; text-transform: uppercase;
+    padding: 8px 14px; border-radius: 999px;
+  }
+  h1 { font: 900 48px 'Arial Rounded MT Bold', 'Cooper Black', Georgia; margin: 18px 0 6px; color: #6a4224; }
+  .why { max-width: 640px; font-size: 17px; line-height: 1.6; color: #7a5f47; }
+
+  .swatches { display: flex; gap: 10px; margin: 26px 0 44px; }
+  .sw { width: 74px; height: 74px; border-radius: 50% 50% 6px 6px; position: relative; border: 3px solid #33261c22; }
+  .sw small { position: absolute; bottom: -22px; left: 50%; transform: translateX(-50%); font: italic 12px Georgia; color: #7a5f47; white-space: nowrap; }
+
+  /* ------------ landing hero ------------ */
+  .hero {
+    background: #f9efdd;
+    border-radius: 34px;
+    border: 3px solid #33261c;
+    box-shadow: 8px 10px 0 #d8a352;
+    padding: 50px 54px;
+    position: relative; overflow: hidden;
+  }
+  .sunburst {
+    position: absolute; right: -140px; top: -140px; width: 480px; height: 480px;
+    background: repeating-conic-gradient(#e9c98f 0 9deg, transparent 9deg 18deg);
+    border-radius: 50%; opacity: 0.5;
+  }
+  .hero-grid { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 44px; align-items: center; position: relative; }
+  .kicker { font: 700 13px 'Segoe UI', sans-serif; letter-spacing: 0.3em; text-transform: uppercase; color: #b3502d; }
+  .hero h2 { font: 900 46px/1.08 'Arial Rounded MT Bold', 'Cooper Black', Georgia; color: #6a4224; margin: 14px 0; }
+  .hero h2 .tilt { color: #b3502d; display: inline-block; transform: rotate(-2deg); }
+  .hero p { font-size: 17px; line-height: 1.65; color: #7a5f47; max-width: 380px; }
+  .cta {
+    display: inline-block; margin-top: 24px;
+    background: #b3502d; color: #f9efdd;
+    font: 700 18px 'Arial Rounded MT Bold', Georgia;
+    padding: 16px 30px; border-radius: 999px;
+    border: 3px solid #33261c; box-shadow: 4px 5px 0 #33261c;
+  }
+
+  /* the radio illustration */
+  .radio {
+    background: #7a4a28;
+    border-radius: 26px 26px 14px 14px;
+    border: 3px solid #33261c;
+    box-shadow: 8px 9px 0 rgba(51,38,28,0.35);
+    padding: 26px 26px 20px;
+    transform: rotate(1.6deg);
+  }
+  .radio .arch {
+    background: #f4e7d3; border: 3px solid #33261c;
+    border-radius: 130px 130px 10px 10px;
+    height: 190px; position: relative; overflow: hidden;
+    display: flex; align-items: flex-end; justify-content: center;
+  }
+  .radio .grill { position: absolute; inset: 24px 30px 18px; background: repeating-linear-gradient(90deg, #d8a352 0 8px, transparent 8px 20px); opacity: 0.7; border-radius: 100px 100px 6px 6px; }
+  .radio .bubble {
+    position: relative; margin: 0 18px 16px; background: #fff8ea; border: 2.5px solid #33261c;
+    border-radius: 16px; padding: 12px 16px; font-size: 15px; line-height: 1.5;
+  }
+  .radio .dials { display: flex; justify-content: space-between; margin-top: 16px; align-items: center; }
+  .dial { width: 42px; height: 42px; border-radius: 50%; background: #d8a352; border: 3px solid #33261c; position: relative; }
+  .dial::after { content: ''; position: absolute; left: 50%; top: 4px; width: 3px; height: 14px; background: #33261c; transform: translateX(-50%); }
+  .freq { flex: 1; height: 12px; margin: 0 16px; background: repeating-linear-gradient(90deg, #33261c 0 2px, transparent 2px 14px); opacity: 0.55; }
+  .radio-caption { text-align: center; font: italic 15px Georgia; color: #7a5f47; margin-top: 14px; }
+
+  /* ------------ visit screen ------------ */
+  .section-label { font: 700 12px 'Segoe UI', sans-serif; letter-spacing: 0.25em; text-transform: uppercase; color: #b3502d; margin: 52px 0 16px; }
+  .tablet { background: #33261c; border-radius: 30px; padding: 18px; max-width: 760px; box-shadow: 0 24px 60px -22px rgba(51,38,28,0.6); }
+  .screen { background: #f4e7d3; border-radius: 16px; padding: 36px 42px 42px; }
+  .theme-pill {
+    margin: 0 auto; width: fit-content;
+    background: #e9c98f; border: 2.5px solid #33261c; border-radius: 999px;
+    font: 700 16px 'Arial Rounded MT Bold', Georgia; color: #6a4224;
+    padding: 10px 22px;
+  }
+  .arch-bubble {
+    margin: 26px auto 0; max-width: 520px;
+    background: #f9efdd; border: 3px solid #33261c;
+    border-radius: 110px 110px 18px 18px;
+    padding: 44px 36px 26px; text-align: center;
+    font-size: 22px; line-height: 1.55; color: #33261c;
+    position: relative;
+    box-shadow: 5px 6px 0 #d8a352;
+  }
+  .arch-bubble .lane-badge {
+    position: absolute; top: -20px; left: 50%; transform: translateX(-50%);
+    background: #b3502d; color: #f9efdd; border: 3px solid #33261c; border-radius: 999px;
+    font: 700 14px 'Arial Rounded MT Bold', Georgia; padding: 7px 18px; letter-spacing: 0.06em;
+  }
+  .chips { display: flex; justify-content: center; flex-wrap: wrap; gap: 14px; margin-top: 26px; }
+  .chip {
+    font: 700 18px 'Arial Rounded MT Bold', Georgia; color: #33261c;
+    background: #f9efdd; border: 3px solid #33261c; border-radius: 999px;
+    padding: 14px 26px; box-shadow: 0 4px 0 #33261c;
+  }
+  .chip.accent { background: #e9c98f; }
+  .footnote { margin-top: 40px; font-size: 15px; color: #7a5f47; font-style: italic; max-width: 640px; line-height: 1.6; }
+</style>
+
+<div class="board">
+  <span class="concept-tag">Concept 2 of 4</span>
+  <h1>Radio Days</h1>
+  <p class="why">Design pulled from the world the patients actually grew up in: 1950s radios, diner menus, thick friendly outlines, sunburst clocks, walnut and burnt orange. Bold, high-contrast, and joyful, like a Wes Anderson prop department built a care app. Every shape is an arch or a pill, nothing is a plain rectangle.</p>
+
+  <div class="swatches">
+    <div class="sw" style="background:#f4e7d3"><small>diner cream</small></div>
+    <div class="sw" style="background:#b3502d"><small>burnt orange</small></div>
+    <div class="sw" style="background:#d8a352"><small>brass</small></div>
+    <div class="sw" style="background:#7a4a28"><small>walnut</small></div>
+    <div class="sw" style="background:#4e7a6a"><small>surf teal</small></div>
+    <div class="sw" style="background:#33261c"><small>outline ink</small></div>
+  </div>
+
+  <div class="hero">
+    <div class="sunburst"></div>
+    <div class="hero-grid">
+      <div>
+        <div class="kicker">A companion for memory care</div>
+        <h2>The good old days,<br><span class="tilt">on the air daily.</span></h2>
+        <p>A short daily visit with Lane, a gentle companion who shares memories instead of testing them. Tuned to their era, not ours.</p>
+        <span class="cta">Start today's visit →</span>
+      </div>
+      <div>
+        <div class="radio">
+          <div class="arch">
+            <div class="grill"></div>
+            <div class="bubble">"I was thinking about those Saturday dances. I bet you two were the pair to watch."</div>
+          </div>
+          <div class="dials"><span class="dial"></span><span class="freq"></span><span class="dial"></span></div>
+        </div>
+        <p class="radio-caption">Lane, broadcasting warmth since always</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-label">The visit, on the tablet</div>
+  <div class="tablet">
+    <div class="screen">
+      <div class="theme-pill">☀️ Today's program: Childhood</div>
+      <div class="arch-bubble">
+        <span class="lane-badge">LANE</span>
+        When I think of childhood I think of long summer days that never seemed to end. Were you more of an outdoors kid or an indoors kid?
+      </div>
+      <div class="chips">
+        <span class="chip accent">Outdoors, always</span>
+        <span class="chip">I liked it indoors</span>
+        <span class="chip">I'm not sure</span>
+      </div>
+    </div>
+  </div>
+
+  <p class="footnote">Why it works for judges: unmistakable point of view, photographs beautifully in a demo, and the era-appropriate styling IS the therapy argument (reminiscence design, not just reminiscence content). Risk: must keep the playfulness dignified, it should feel like their youth, never like a toy.</p>
+</div>

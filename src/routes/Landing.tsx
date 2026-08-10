@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import Button from '../components/Button'
 import CountUp from '../components/CountUp'
-import DesignPicker from '../components/DesignPicker'
 import { LogoLockup, LogoMark } from '../components/Logo'
 import Reveal from '../components/Reveal'
 import { enableDemo, isDemoActive } from '../lib/demo'
@@ -32,7 +31,6 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen">
-      <DesignPicker variant="floating" />
       {/* ------------------------------ header ------------------------------ */}
       <header className="relative z-10 mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
         <LogoLockup size={36} />
@@ -49,17 +47,18 @@ export default function Landing() {
       </header>
 
       {/* ------------------------------- hero ------------------------------- */}
-      <section className="relative overflow-hidden">
-        <div aria-hidden="true" className="aurora aurora-a" />
-        <div aria-hidden="true" className="aurora aurora-b" />
-        <div className="relative mx-auto max-w-6xl px-6 pb-20 pt-10 md:pt-16">
-          <div className="grid items-center gap-12 md:grid-cols-[1.05fr_1fr]">
+      {/* An open album page: photo-white panel, dashed stitching inset,
+          the live demo taped in like a treasured print. */}
+      <section className="relative mx-auto max-w-6xl px-6 pb-16 pt-6 md:pt-10">
+        <div className="relative rounded-xl border border-cream-deep bg-[#F7F0E4] px-8 py-12 shadow-lift md:px-12 md:py-14">
+          <div aria-hidden="true" className="stitched pointer-events-none absolute inset-3 rounded-lg" />
+          <div className="relative grid items-center gap-12 md:grid-cols-[1.05fr_1fr]">
             <div>
-              <p className="eyebrow">AI companion for memory care</p>
+              <p className="eyebrow">A companion for memory care</p>
               <h1 className="mt-5 text-5xl font-bold md:text-6xl">
-                <Words text="Help your loved one hold" startIndex={0} />{' '}
+                <Words text="Their story, kept" startIndex={0} />{' '}
                 <span className="highlight">
-                  <Words text="the moments that matter." startIndex={5} />
+                  <Words text="like a keepsake." startIndex={3} />
                 </span>
               </h1>
               <p
@@ -94,6 +93,12 @@ export default function Landing() {
             <LiveDemo />
           </div>
         </div>
+        <p
+          aria-hidden="true"
+          className="hand pointer-events-none absolute -bottom-1 right-14 hidden rotate-[-2deg] text-lg text-[#8A4B2A] md:block"
+        >
+          a real visit, playing itself ↗
+        </p>
       </section>
 
       {/* ------------------------------ fact strip ---------------------------- */}
@@ -390,9 +395,9 @@ function LiveDemo() {
 
   return (
     <div aria-hidden="true" className="relative mx-auto w-full max-w-md">
-      <div className="absolute -left-6 -top-6 h-40 w-40 rounded-full bg-sage-wash" />
-      <div className="absolute -bottom-8 -right-4 h-52 w-52 rounded-full bg-amber-wash" />
       <div className="card relative rotate-[-1.2deg] p-6 shadow-deep">
+        <span className="tape left-1/2 top-[-13px] -translate-x-1/2 rotate-[-2deg]" />
+        <span className="tape bottom-[-11px] right-[-26px] rotate-[42deg]" style={{ width: 64 }} />
         <div className="flex items-start gap-3">
           <LogoMark size={34} />
           <div className="min-h-[96px] flex-1 rounded-xl rounded-tl-sm bg-brand-wash px-4 py-3 text-ink">

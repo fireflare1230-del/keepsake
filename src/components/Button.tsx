@@ -14,13 +14,17 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
  * obvious pressed state. `xl` is for the patient-facing screens where
  * targets should be even more generous.
  */
+/**
+ * v2.0 album materials: the primary action is leather brown with a hard
+ * offset shadow, like something pressed onto the page by hand.
+ */
 const variantClasses: Record<Variant, string> = {
   primary:
-    'bg-amber text-ink font-semibold shadow-card hover:brightness-105 active:shadow-press',
+    'bg-[#A06B3A] text-[#FDF8EE] font-semibold shadow-[3px_4px_0_#3D2F24] hover:brightness-110 active:shadow-[1px_2px_0_#3D2F24]',
   secondary:
-    'bg-sage-wash text-sage-deep font-semibold border border-sage/50 hover:bg-sage/25 active:shadow-press',
+    'bg-[#FFFDF6] text-[#6E5233] font-semibold border-2 border-[#C9B493] shadow-[2px_3px_0_rgba(61,47,36,0.18)] hover:border-[#A06B3A] active:shadow-press',
   brand:
-    'bg-brand-deep text-cream font-semibold shadow-card hover:bg-brand-deeper active:shadow-press',
+    'bg-brand-deep text-cream font-semibold shadow-[3px_4px_0_#3D2F24] hover:bg-brand-deeper active:shadow-press',
   ghost:
     'bg-transparent text-brand-deep font-semibold hover:bg-brand-wash active:shadow-press',
   danger:

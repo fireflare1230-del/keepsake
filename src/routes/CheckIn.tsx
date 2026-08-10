@@ -460,10 +460,11 @@ function VisitFlow({ profile, preview }: { profile: Profile; preview: boolean })
       {step === 'talk' && (
         <div className="step-enter mt-6">
           {/* Topic card (FR-16) */}
-          <div className="mx-auto flex max-w-md items-center justify-center gap-3 rounded-full bg-sage-wash px-6 py-3">
+          <div className="relative mx-auto flex max-w-md items-center justify-center gap-3 rounded-md border border-cream-deep bg-[#FFFDF6] px-6 py-3 shadow-[2px_3px_0_rgba(61,47,36,0.1)]">
+            <span aria-hidden="true" className="tape left-1/2 top-[-14px] h-[20px] w-[64px] -translate-x-1/2 rotate-[-1.5deg]" />
             <span aria-hidden="true" className="text-2xl">{theme.emoji}</span>
             <span className="text-lg font-semibold text-sage-deep">
-              Today&rsquo;s memory: {theme.name}
+              Today&rsquo;s page: {theme.name}
             </span>
           </div>
 
@@ -616,11 +617,19 @@ function VisitFlow({ profile, preview }: { profile: Profile; preview: boolean })
           <h1 className="text-center text-4xl">A picture for you 💛</h1>
           <div className="mx-auto mt-8 max-w-xl">
             {photoUrls.current.get(moment.photo.id) && (
-              <img
-                src={photoUrls.current.get(moment.photo.id)}
-                alt={moment.photo.caption || 'A family photo'}
-                className="mx-auto max-h-[46vh] w-auto rounded-xl border-8 border-[#FFFDF9] shadow-lift"
-              />
+              <figure className="polaroid relative mx-auto w-fit rotate-[-1.6deg]">
+                <span aria-hidden="true" className="tape left-1/2 top-[-13px] -translate-x-1/2 rotate-[-2deg]" />
+                <img
+                  src={photoUrls.current.get(moment.photo.id)}
+                  alt={moment.photo.caption || 'A family photo'}
+                  className="mx-auto max-h-[42vh] w-auto"
+                />
+                {moment.photo.caption && (
+                  <figcaption className="hand mt-2.5 text-center text-lg text-[#4C3B2C]">
+                    {moment.photo.caption}
+                  </figcaption>
+                )}
+              </figure>
             )}
             <div className="mt-6">
               <LaneBubble large showSpeaker={showSpeaker} text={moment.share} />
@@ -847,7 +856,7 @@ function LaneBubble({
       <div className="min-w-0">
         <div
           className={
-            'bubble-in rounded-xl rounded-tl-sm bg-brand-wash px-5 py-3.5 text-ink ' +
+            'bubble-in rounded-xl rounded-tl-sm border border-[#E5D8BC] bg-brand-wash px-5 py-3.5 text-ink shadow-[2px_3px_0_rgba(61,47,36,0.07)] ' +
             (large ? 'text-2xl leading-relaxed' : 'text-xl')
           }
         >

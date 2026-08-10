@@ -1,0 +1,189 @@
+<meta charset="utf-8">
+<title>Concept 1 · The Family Album</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: Georgia, 'Times New Roman', serif;
+    background: #efe6d8;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(120,90,60,0.025) 0 2px, transparent 2px 26px),
+      radial-gradient(80rem 50rem at 50% -20%, #f7f0e4, #efe6d8);
+    color: #3d2f24;
+    padding: 40px 24px 80px;
+  }
+  .board { max-width: 980px; margin: 0 auto; }
+
+  .concept-tag {
+    display: inline-block;
+    background: #3d2f24; color: #f2e9db;
+    font: 700 13px/1 'Segoe UI', sans-serif;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    padding: 8px 14px; transform: rotate(-1.2deg);
+  }
+  h1 { font-size: 46px; font-style: italic; margin: 18px 0 6px; }
+  .why { max-width: 620px; font-size: 17px; line-height: 1.6; color: #6b5947; }
+
+  .swatches { display: flex; gap: 10px; margin: 26px 0 40px; }
+  .sw { width: 74px; height: 74px; border-radius: 4px; box-shadow: 2px 3px 0 rgba(61,47,36,0.25); position: relative; transform: rotate(-1deg); }
+  .sw:nth-child(2n) { transform: rotate(1.4deg); }
+  .sw small { position: absolute; bottom: -22px; left: 0; font: italic 12px Georgia; color: #6b5947; white-space: nowrap; }
+
+  /* ------------ landing hero mock ------------ */
+  .hero {
+    background: #f7f0e4;
+    border: 1px solid #d8c9b2;
+    box-shadow: 0 18px 50px -20px rgba(61,47,36,0.5);
+    padding: 46px 50px 54px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before { /* stitched border */
+    content: ''; position: absolute; inset: 12px;
+    border: 2px dashed #c9b493; pointer-events: none;
+  }
+  .hero-grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 40px; align-items: center; position: relative; }
+  .kicker { font: 700 12px/1 'Segoe UI', sans-serif; letter-spacing: 0.3em; text-transform: uppercase; color: #a06b3a; }
+  .hero h2 { font-size: 44px; line-height: 1.1; margin: 14px 0; font-weight: 400; }
+  .hero h2 em { font-style: italic; color: #a06b3a; }
+  .hero p { font-size: 17px; line-height: 1.65; color: #6b5947; max-width: 380px; }
+  .cta {
+    display: inline-block; margin-top: 22px;
+    background: #a06b3a; color: #fdf8ee;
+    font: 700 17px Georgia; padding: 14px 26px;
+    border-radius: 3px; box-shadow: 3px 4px 0 #3d2f24;
+    transform: rotate(-0.6deg);
+  }
+
+  /* polaroid stack */
+  .stack { position: relative; height: 330px; }
+  .polaroid {
+    position: absolute; background: #fffdf6; padding: 12px 12px 44px;
+    box-shadow: 0 10px 26px -8px rgba(61,47,36,0.45);
+  }
+  .polaroid .ph { width: 100%; height: 150px; }
+  .polaroid figcaption { font: italic 15px 'Segoe Script', 'Bradley Hand', cursive; text-align: center; margin-top: 10px; color: #4c3b2c; }
+  .p1 { width: 210px; left: 8%; top: 6%; transform: rotate(-5deg); }
+  .p2 { width: 220px; right: 4%; top: 22%; transform: rotate(3.4deg); }
+  .tape {
+    position: absolute; width: 92px; height: 26px; top: -12px; left: 50%;
+    transform: translateX(-50%) rotate(-2deg);
+    background: rgba(212,183,120,0.55);
+    box-shadow: inset 0 0 6px rgba(120,90,40,0.25);
+  }
+  /* hand drawn photo scenes in SVG-ish CSS */
+  .scene-porch { background: linear-gradient(#d9a852 55%, #7d5a38 55%); position: relative; }
+  .scene-porch::after { content: '🪑'; position: absolute; right: 14px; bottom: 8px; font-size: 34px; filter: sepia(0.5); }
+  .scene-lake { background: linear-gradient(#b8c9c1 60%, #5b7a70 60%); position: relative; }
+  .scene-lake::after { content: '🎣'; position: absolute; left: 16px; bottom: 12px; font-size: 30px; filter: sepia(0.4); }
+
+  .annotation {
+    position: absolute; font: italic 16px 'Segoe Script', 'Bradley Hand', cursive;
+    color: #8a4b2a;
+  }
+  .a1 { right: -4px; top: -14px; transform: rotate(4deg); }
+
+  /* ------------ visit screen mock ------------ */
+  .section-label { font: 700 12px 'Segoe UI', sans-serif; letter-spacing: 0.25em; text-transform: uppercase; color: #a06b3a; margin: 52px 0 16px; }
+  .tablet {
+    background: #40342a; border-radius: 26px; padding: 18px;
+    box-shadow: 0 24px 60px -22px rgba(40,28,16,0.6);
+    max-width: 760px;
+  }
+  .screen {
+    background: #f7f0e4; border-radius: 12px; padding: 34px 40px 40px; position: relative; overflow: hidden;
+    background-image: repeating-linear-gradient(0deg, rgba(120,90,60,0.03) 0 2px, transparent 2px 26px);
+  }
+  .screen .page-title { text-align: center; font-style: italic; font-size: 26px; color: #6b5947; }
+  .album-page { display: grid; grid-template-columns: 300px 1fr; gap: 30px; margin-top: 24px; align-items: start; }
+  .album-photo { background: #fffdf6; padding: 10px 10px 34px; transform: rotate(-2.4deg); box-shadow: 0 8px 20px -6px rgba(61,47,36,0.4); position: relative; }
+  .album-photo .corner { position: absolute; width: 22px; height: 22px; background: #caa96a; }
+  .corner.tl { top: -6px; left: -6px; clip-path: polygon(0 0, 100% 0, 0 100%); }
+  .corner.br { bottom: -6px; right: -6px; clip-path: polygon(100% 100%, 100% 0, 0 100%); }
+  .lane-card {
+    background: #fffdf6; border: 1px solid #d8c9b2; padding: 22px 24px;
+    font-size: 20px; line-height: 1.6; position: relative;
+    box-shadow: 3px 4px 0 rgba(61,47,36,0.15);
+  }
+  .lane-card::before {
+    content: 'Lane wrote…'; position: absolute; top: -14px; left: 18px;
+    background: #f7f0e4; padding: 0 8px;
+    font: italic 14px 'Segoe Script', 'Bradley Hand', cursive; color: #8a4b2a;
+  }
+  .chips { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
+  .chip {
+    font: 400 18px Georgia; font-style: italic;
+    background: #fffdf6; border: 1.5px solid #a06b3a; color: #3d2f24;
+    padding: 12px 22px; border-radius: 3px;
+    box-shadow: 2px 3px 0 rgba(160,107,58,0.35);
+    transform: rotate(-0.7deg);
+  }
+  .chip:nth-child(2) { transform: rotate(0.9deg); }
+  .chip:nth-child(3) { transform: rotate(-0.4deg); background: #f0e6d2; border-style: dashed; }
+
+  .footnote { margin-top: 40px; font-size: 15px; color: #6b5947; font-style: italic; max-width: 640px; line-height: 1.6; }
+</style>
+
+<div class="board">
+  <span class="concept-tag">Concept 1 of 4</span>
+  <h1>The Family Album</h1>
+  <p class="why">The whole app becomes a scrapbook someone's daughter could have glued together at the kitchen table. Paper grain, photo corners, washi tape, handwritten notes in the margins. Nothing floats on a gradient; everything is pinned, taped, or tucked in. Warmth through craft, not through softness filters.</p>
+
+  <div class="swatches">
+    <div class="sw" style="background:#efe6d8"><small>album paper</small></div>
+    <div class="sw" style="background:#fffdf6"><small>photo white</small></div>
+    <div class="sw" style="background:#a06b3a"><small>leather brown</small></div>
+    <div class="sw" style="background:#8a4b2a"><small>pen ink</small></div>
+    <div class="sw" style="background:#d4b778"><small>washi tape</small></div>
+    <div class="sw" style="background:#3d2f24"><small>walnut</small></div>
+  </div>
+
+  <div class="hero">
+    <div class="hero-grid">
+      <div>
+        <div class="kicker">A companion for memory care</div>
+        <h2>Their story,<br><em>kept like a keepsake.</em></h2>
+        <p>A short daily visit with Lane, a gentle companion who shares memories instead of testing them. Every visit becomes a page in the album.</p>
+        <span class="cta">Open the album →</span>
+      </div>
+      <div class="stack">
+        <figure class="polaroid p1">
+          <span class="tape"></span>
+          <div class="ph scene-porch"></div>
+          <figcaption>the porch, summer '62</figcaption>
+        </figure>
+        <figure class="polaroid p2">
+          <span class="tape"></span>
+          <div class="ph scene-lake"></div>
+          <figcaption>Gene &amp; the rowboat</figcaption>
+          <span class="annotation a1">remember this?! ♡</span>
+        </figure>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-label">The visit, on the tablet</div>
+  <div class="tablet">
+    <div class="screen">
+      <div class="page-title">Today's page · Childhood summers</div>
+      <div class="album-page">
+        <figure class="album-photo">
+          <span class="corner tl"></span><span class="corner br"></span>
+          <div class="ph scene-porch" style="height:170px"></div>
+          <figcaption style="font: italic 15px 'Segoe Script','Bradley Hand',cursive; text-align:center; margin-top:9px;">the old house on Maple St.</figcaption>
+        </figure>
+        <div>
+          <div class="lane-card">
+            I was thinking about those long summer evenings. I bet the porch was the place to be, everybody out there until the streetlights came on.
+          </div>
+          <div class="chips">
+            <span class="chip">It sure was</span>
+            <span class="chip">That sounds like home</span>
+            <span class="chip">Tell me more</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="footnote">Why it works for judges: instantly explains the product (an album of a life), zero "template" feel, and the scrapbook metaphor extends everywhere: the visit log is the album, milestones are pressed flowers, Lane's notes are marginalia. Risk: needs care to keep text contrast high on paper textures.</p>
+</div>

@@ -14,11 +14,6 @@ import '@fontsource/atkinson-hyperlegible/400.css'
 import '@fontsource/atkinson-hyperlegible/700.css'
 
 import './styles/index.css'
-import { bootDesign } from './lib/design'
-
-// Apply the saved design pack before first render (no flash of the
-// wrong theme).
-bootDesign()
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

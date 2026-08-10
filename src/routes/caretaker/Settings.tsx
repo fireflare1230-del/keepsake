@@ -15,6 +15,7 @@ import {
 import { friendlyDateTime } from '../../lib/dates'
 import { hashPin } from '../../lib/pin'
 import { canSpeak, listVoices, speak, whenVoicesReady } from '../../lib/speech'
+import DesignPicker from '../../components/DesignPicker'
 import { downloadReminderIcs } from '../../lib/reminder'
 import {
   buildBackup,
@@ -493,6 +494,20 @@ export default function Settings() {
             {accountMessage.message}
           </p>
         )}
+      </section>
+
+      {/* ----------------------------- appearance ----------------------------- */}
+      <section className="card mt-6" aria-labelledby="appearance-heading">
+        <h2 id="appearance-heading" className="text-2xl">
+          Appearance
+        </h2>
+        <p className="mt-2 text-base text-ink-muted">
+          Three complete looks, all equally calm and readable. Changes apply
+          instantly, everywhere.
+        </p>
+        <div className="mt-5">
+          <DesignPicker variant="inline" />
+        </div>
       </section>
 
       {/* --------------------------- daily reminder --------------------------- */}

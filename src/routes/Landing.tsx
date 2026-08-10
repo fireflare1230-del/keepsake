@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import Button from '../components/Button'
 import CountUp from '../components/CountUp'
+import DesignPicker from '../components/DesignPicker'
 import { LogoLockup, LogoMark } from '../components/Logo'
 import Reveal from '../components/Reveal'
 import { enableDemo, isDemoActive } from '../lib/demo'
@@ -31,6 +32,7 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen">
+      <DesignPicker variant="floating" />
       {/* ------------------------------ header ------------------------------ */}
       <header className="relative z-10 mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
         <LogoLockup size={36} />

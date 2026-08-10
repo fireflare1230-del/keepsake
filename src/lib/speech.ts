@@ -14,10 +14,20 @@ export function canSpeak(): boolean {
 /**
  * Not all voices are equal: the classic robotic system voices sit right
  * next to modern neural ones in the same list. Score each English voice
- * so the warmest, most human option wins by default. On Windows
- * Edge/Chrome this typically selects a Microsoft "(Natural)" voice such
- * as Aria or Jenny.
+ * so the warmest, most human option wins by default.
+ *
+ * Lane's default voice is a WOMAN'S voice, warm and unhurried, the
+ * voice of a caretaker. The Web Speech API doesn't expose gender, so
+ * this ranks by the known female voice names on each platform
+ * (Windows: Aria/Jenny/Michelle; Apple: Samantha/Ava/Karen; Chrome:
+ * Google US English). Anyone can still pick a different voice in
+ * Settings, the ranking only decides the default.
  */
+const FEMALE_VOICES =
+  /aria|jenny|jane|sonia|libby|michelle|emma|ana\b|ava\b|allison|susan|serena|samantha|karen|moira|tessa|catherine|hazel|heather|joanna|salli|kimberly|ivy\b|kendra|nicole|amy\b|olivia|zira|female|woman/
+const MALE_VOICES =
+  /david|mark\b|guy\b|george|daniel|alex\b|fred|james|ryan|eric|thomas|brian|christopher|william|matthew|male\b|\bman\b/
+
 export function scoreVoice(voice: SpeechSynthesisVoice): number {
   const name = voice.name.toLowerCase()
   let score = 0
@@ -25,11 +35,11 @@ export function scoreVoice(voice: SpeechSynthesisVoice): number {
   if (name.includes('natural')) score += 100 // Microsoft neural voices
   if (name.includes('neural')) score += 100
   if (name.includes('online')) score += 20
-  if (/aria|jenny|sonia|libby|michelle|emma|ana\b/.test(name)) score += 15
   if (name.includes('google')) score += 40 // Chrome's better built-ins
-  if (/samantha|karen|moira|tessa/.test(name)) score += 30 // decent Apple voices
-  if (/zira|david|mark\b|microsoft (?!.*natural)/.test(name) && !name.includes('natural'))
-    score += 5 // legacy Microsoft voices: last resort
+  if (FEMALE_VOICES.test(name)) score += 60 // Lane sounds like a caretaker
+  if (MALE_VOICES.test(name)) score -= 40
+  if (/zira|microsoft (?!.*natural)/.test(name) && !name.includes('natural'))
+    score += 5 // legacy Microsoft voices: last resort among the rest
   if (voice.localService) score += 2 // tiny tie-break: works offline
   return score
 }

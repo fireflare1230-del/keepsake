@@ -303,6 +303,123 @@
 }
 
 /* ---------------------------------------------------------------------------
+   Design packs (v1.5). Three complete looks, switched by [data-design]
+   on <html>. Hearth is the default (no attribute). Each pack re-skins
+   the highest-visibility surfaces: page light, cards, primary action,
+   Lane's bubble, washes, highlight, aurora, and the evergreen panel.
+--------------------------------------------------------------------------- */
+
+/* ------------------------------- DUSK ------------------------------------ */
+[data-design='dusk'] body {
+  background-color: #f6f2f7;
+  background-image:
+    radial-gradient(70rem 45rem at 112% -12%, rgba(217, 164, 65, 0.13), transparent 62%),
+    radial-gradient(55rem 40rem at -18% 18%, rgba(138, 107, 154, 0.16), transparent 60%),
+    radial-gradient(60rem 48rem at 50% 125%, rgba(197, 106, 131, 0.09), transparent 62%);
+}
+[data-design='dusk'] .card {
+  background-color: #fcfafd;
+  border-color: #e7dfea;
+}
+[data-design='dusk'] .bg-amber { background-color: #d9a441; }
+[data-design='dusk'] .bg-amber-wash { background-color: #f5ebd9; }
+[data-design='dusk'] .text-amber-deep { color: #7a5a15; }
+[data-design='dusk'] .border-amber\/50 { border-color: rgba(217, 164, 65, 0.5); }
+[data-design='dusk'] .bg-brand { background-color: #8a6b9a; }
+[data-design='dusk'] .bg-brand-wash,
+[data-design='dusk'] .hover\:bg-brand-wash:hover { background-color: #efe8f2; }
+[data-design='dusk'] .text-brand-deep { color: #6b4e7d; }
+[data-design='dusk'] .text-brand-deeper { color: #533c63; }
+[data-design='dusk'] .border-brand { border-color: #8a6b9a; }
+[data-design='dusk'] .border-brand\/40 { border-color: rgba(138, 107, 154, 0.4); }
+[data-design='dusk'] .hover\:border-brand:hover { border-color: #8a6b9a; }
+[data-design='dusk'] .bg-sage-wash { background-color: #e8eaf1; }
+[data-design='dusk'] .text-sage-deep { color: #4a5578; }
+[data-design='dusk'] .bg-cream-soft,
+[data-design='dusk'] .hover\:bg-cream-soft:hover { background-color: #f1ebf2; }
+[data-design='dusk'] .bg-cream-deep { background-color: #e3dae6; }
+[data-design='dusk'] .border-cream-deep { border-color: #e3dae6; }
+[data-design='dusk'] .bg-evergreen { background-color: #352a42; }
+[data-design='dusk'] .highlight {
+  background-image: linear-gradient(
+    180deg,
+    transparent 58%,
+    rgba(217, 164, 65, 0.42) 58%,
+    rgba(217, 164, 65, 0.42) 94%,
+    transparent 94%
+  );
+}
+[data-design='dusk'] .eyebrow { color: #7a5a15; }
+[data-design='dusk'] .eyebrow::before { background: #d9a441; }
+[data-design='dusk'] .accent-word { color: #6b4e7d; }
+[data-design='dusk'] .demo-caret { background: #6b4e7d; }
+[data-design='dusk'] .thinking-dot { background-color: #8a6b9a; }
+[data-design='dusk'] .aurora-a {
+  background:
+    radial-gradient(38rem 30rem at 22% 30%, rgba(217, 164, 65, 0.42), transparent 65%),
+    radial-gradient(30rem 26rem at 80% 15%, rgba(138, 107, 154, 0.45), transparent 62%);
+}
+[data-design='dusk'] .aurora-b {
+  background:
+    radial-gradient(34rem 30rem at 75% 75%, rgba(197, 106, 131, 0.3), transparent 64%),
+    radial-gradient(26rem 22rem at 12% 85%, rgba(94, 106, 172, 0.22), transparent 60%);
+}
+
+/* ------------------------------ MEADOW ----------------------------------- */
+[data-design='meadow'] body {
+  background-color: #f4f7f1;
+  background-image:
+    radial-gradient(70rem 45rem at 112% -12%, rgba(232, 190, 80, 0.12), transparent 62%),
+    radial-gradient(55rem 40rem at -18% 18%, rgba(78, 125, 91, 0.14), transparent 60%),
+    radial-gradient(60rem 48rem at 50% 125%, rgba(208, 120, 80, 0.09), transparent 62%);
+}
+[data-design='meadow'] .card {
+  background-color: #fdfefb;
+  border-color: #e2e8dc;
+}
+[data-design='meadow'] .bg-amber { background-color: #de8b60; }
+[data-design='meadow'] .bg-amber-wash { background-color: #f9e9e0; }
+[data-design='meadow'] .text-amber-deep { color: #8f4b26; }
+[data-design='meadow'] .border-amber\/50 { border-color: rgba(222, 139, 96, 0.5); }
+[data-design='meadow'] .bg-brand { background-color: #6fa080; }
+[data-design='meadow'] .bg-brand-wash,
+[data-design='meadow'] .hover\:bg-brand-wash:hover { background-color: #e7f0e4; }
+[data-design='meadow'] .text-brand-deep { color: #3f6b4f; }
+[data-design='meadow'] .text-brand-deeper { color: #2f5340; }
+[data-design='meadow'] .border-brand { border-color: #6fa080; }
+[data-design='meadow'] .border-brand\/40 { border-color: rgba(111, 160, 128, 0.4); }
+[data-design='meadow'] .hover\:border-brand:hover { border-color: #6fa080; }
+[data-design='meadow'] .bg-sage-wash { background-color: #eaf0ea; }
+[data-design='meadow'] .bg-cream-soft,
+[data-design='meadow'] .hover\:bg-cream-soft:hover { background-color: #edf2e8; }
+[data-design='meadow'] .bg-cream-deep { background-color: #dfe7d8; }
+[data-design='meadow'] .border-cream-deep { border-color: #dfe7d8; }
+[data-design='meadow'] .highlight {
+  background-image: linear-gradient(
+    180deg,
+    transparent 58%,
+    rgba(222, 139, 96, 0.38) 58%,
+    rgba(222, 139, 96, 0.38) 94%,
+    transparent 94%
+  );
+}
+[data-design='meadow'] .eyebrow { color: #8f4b26; }
+[data-design='meadow'] .eyebrow::before { background: #de8b60; }
+[data-design='meadow'] .accent-word { color: #3f6b4f; }
+[data-design='meadow'] .demo-caret { background: #3f6b4f; }
+[data-design='meadow'] .thinking-dot { background-color: #6fa080; }
+[data-design='meadow'] .aurora-a {
+  background:
+    radial-gradient(38rem 30rem at 22% 30%, rgba(232, 190, 80, 0.4), transparent 65%),
+    radial-gradient(30rem 26rem at 80% 15%, rgba(78, 125, 91, 0.4), transparent 62%);
+}
+[data-design='meadow'] .aurora-b {
+  background:
+    radial-gradient(34rem 30rem at 75% 75%, rgba(208, 120, 80, 0.3), transparent 64%),
+    radial-gradient(26rem 22rem at 12% 85%, rgba(111, 160, 128, 0.28), transparent 60%);
+}
+
+/* ---------------------------------------------------------------------------
    Print styles, used by the caretaker report (one-tap printable summary).
    Everything except the report content is hidden when printing.
 --------------------------------------------------------------------------- */

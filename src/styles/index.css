@@ -102,6 +102,122 @@
 }
 
 @layer components {
+  /* -------------------------------------------------------------------
+     v1.4 motion system. Big where the audience is (landing, caretaker),
+     calm where it matters (the visit). Everything honors
+     prefers-reduced-motion via the global rule above.
+  ------------------------------------------------------------------- */
+
+  /* Route-level entrance: every page arrives with a soft rise. */
+  .route-enter {
+    animation: routeEnter 0.5s cubic-bezier(0.22, 0.9, 0.3, 1) both;
+  }
+  @keyframes routeEnter {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* The landing hero's slow-breathing aurora. GPU-cheap: two blurred
+     radial layers drifting on transform only. */
+  .aurora {
+    position: absolute;
+    inset: -20%;
+    pointer-events: none;
+    filter: blur(60px);
+    opacity: 0.55;
+  }
+  .aurora-a {
+    background:
+      radial-gradient(38rem 30rem at 22% 30%, rgba(232, 160, 76, 0.5), transparent 65%),
+      radial-gradient(30rem 26rem at 80% 15%, rgba(143, 179, 154, 0.45), transparent 62%);
+    animation: auroraDrift 26s ease-in-out infinite alternate;
+  }
+  .aurora-b {
+    background:
+      radial-gradient(34rem 30rem at 75% 75%, rgba(94, 147, 172, 0.38), transparent 64%),
+      radial-gradient(26rem 22rem at 12% 85%, rgba(197, 106, 83, 0.22), transparent 60%);
+    animation: auroraDrift 32s ease-in-out infinite alternate-reverse;
+  }
+  @keyframes auroraDrift {
+    from { transform: translate3d(-3%, -2%, 0) scale(1); }
+    to   { transform: translate3d(3%, 4%, 0) scale(1.12); }
+  }
+
+  /* Hero headline: words rise one by one. Apply .word with --i set. */
+  .word {
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(0.55em) rotate(1.5deg);
+    animation: wordRise 0.65s cubic-bezier(0.22, 0.9, 0.3, 1) forwards;
+    animation-delay: calc(0.08s * var(--i, 0) + 0.15s);
+  }
+  @keyframes wordRise {
+    to { opacity: 1; transform: translateY(0) rotate(0); }
+  }
+
+  /* Scroll-triggered reveals (paired with the Reveal component). */
+  .reveal {
+    opacity: 0;
+    transform: translateY(26px);
+    transition:
+      opacity 0.7s cubic-bezier(0.22, 0.9, 0.3, 1),
+      transform 0.7s cubic-bezier(0.22, 0.9, 0.3, 1);
+    transition-delay: var(--reveal-delay, 0s);
+  }
+  .reveal.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { opacity: 1; transform: none; }
+  }
+
+  /* The landing page's self-playing demo: Lane "types". */
+  .demo-caret {
+    display: inline-block;
+    width: 2px;
+    height: 1.1em;
+    margin-left: 2px;
+    vertical-align: text-bottom;
+    background: #3e6e86;
+    animation: caretBlink 0.9s steps(1) infinite;
+  }
+  @keyframes caretBlink {
+    50% { opacity: 0; }
+  }
+  .demo-chip-in {
+    animation: chipPop 0.45s cubic-bezier(0.34, 1.4, 0.44, 1) both;
+  }
+  @keyframes chipPop {
+    from { opacity: 0; transform: scale(0.85) translateY(8px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  /* Celebration sunrays behind the done-step sunflower. */
+  .sunray-wrap {
+    position: absolute;
+    left: 50%;
+    top: 44px;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+  }
+  .sunray {
+    position: absolute;
+    left: -3px;
+    bottom: 0;
+    width: 6px;
+    height: 74px;
+    border-radius: 3px;
+    background: linear-gradient(to top, rgba(232, 160, 76, 0), rgba(232, 160, 76, 0.55));
+    transform-origin: 50% 100%;
+    animation: rayPulse 3.2s ease-in-out infinite;
+  }
+  @keyframes rayPulse {
+    0%, 100% { opacity: 0.35; transform: rotate(var(--angle)) scaleY(0.82); }
+    50%      { opacity: 0.9;  transform: rotate(var(--angle)) scaleY(1.06); }
+  }
+
   /* Soft card, the basic surface of the whole app */
   .card {
     @apply rounded-xl bg-white/70 shadow-card border border-cream-deep p-6;

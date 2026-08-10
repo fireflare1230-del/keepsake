@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import Button from '../components/Button'
 import Chip from '../components/Chip'
+import CountUp from '../components/CountUp'
 import { LogoMark } from '../components/Logo'
 import MoodPicker from '../components/MoodPicker'
 import MusicEmbed from '../components/MusicEmbed'
@@ -693,14 +694,28 @@ function VisitFlow({ profile, preview }: { profile: Profile; preview: boolean })
       {step === 'done' && (
         <div className="step-enter relative mt-14 text-center">
           <Petals />
-          <span aria-hidden="true" className="text-7xl">🌻</span>
+          <span aria-hidden="true" className="sunray-wrap">
+            {[-66, -44, -22, 0, 22, 44, 66].map((angle, i) => (
+              <span
+                key={angle}
+                className="sunray"
+                style={
+                  {
+                    '--angle': `${angle}deg`,
+                    animationDelay: `${i * 0.18}s`,
+                  } as React.CSSProperties
+                }
+              />
+            ))}
+          </span>
+          <span aria-hidden="true" className="relative text-7xl">🌻</span>
           <h1 className="mt-6 text-4xl md:text-5xl">
             That was a lovely visit, {profile.preferredName}.
           </h1>
           {!preview && streakResult && (
             <div className="mx-auto mt-8 max-w-sm rounded-xl bg-amber-wash px-8 py-6 shadow-card">
               <p className="text-2xl font-bold text-amber-deep">
-                ☀️ {streakResult.currentStreak} day
+                ☀️ <CountUp value={streakResult.currentStreak} /> day
                 {streakResult.currentStreak === 1 ? '' : 's'} in a row
               </p>
               <p className="mt-2 text-lg text-ink-muted">

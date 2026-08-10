@@ -4,6 +4,7 @@ import Button from '../../components/Button'
 import { THEMES } from '../../data/themes'
 import { earnedMilestones } from '../../features/checkin/milestones'
 import { timeGreeting } from '../../lib/dates'
+import { disableDemo, isDemoActive } from '../../lib/demo'
 import {
   getActiveProfile,
   loadLearnedFacts,
@@ -89,6 +90,23 @@ export default function Dashboard() {
 
   return (
     <div className="stagger-in py-8">
+      {isDemoActive() && (
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber/50 bg-amber-wash px-5 py-3.5">
+          <p className="font-semibold text-amber-deep">
+            👋 You&rsquo;re touring the sample family. Everything here is
+            example data, explore freely.
+          </p>
+          <Button
+            variant="ghost"
+            onClick={() => {
+              disableDemo()
+              navigate('/')
+            }}
+          >
+            Remove sample data
+          </Button>
+        </div>
+      )}
       <h1 className="text-3xl">
         {timeGreeting()}, here&rsquo;s {profile.preferredName}&rsquo;s Keepsake.
       </h1>

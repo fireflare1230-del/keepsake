@@ -41,11 +41,22 @@ function PageTitle() {
   return null
 }
 
+/** Soft rise on every route change (v1.4 motion system). */
+function RouteTransition({ children }: { children: React.ReactNode }) {
+  const { pathname } = useLocation()
+  return (
+    <div key={pathname} className="route-enter">
+      {children}
+    </div>
+  )
+}
+
 export default function App() {
   return (
     <HashRouter>
       <ScrollToTop />
       <PageTitle />
+      <RouteTransition>
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/welcome" element={<Onboarding />} />
@@ -66,6 +77,7 @@ export default function App() {
         />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </RouteTransition>
     </HashRouter>
   )
 }

@@ -53,6 +53,14 @@ export default {
           deep: '#9A4531',    // 5.5:1 on cream
           wash: '#F7E8E3',
         },
+        // Evergreen (v1.4) — the premium dark accent for hero surfaces,
+        // footers, and moments that should feel grounded and calm.
+        evergreen: {
+          DEFAULT: '#1E3A34',
+          deep: '#142823',
+          soft: '#2C4F47',
+          wash: '#E6EEEB',
+        },
       },
       fontFamily: {
         sans: [
@@ -79,6 +87,7 @@ export default {
         '3xl': ['1.875rem', { lineHeight: '1.3' }],  // 30px
         '4xl': ['2.375rem', { lineHeight: '1.2' }],  // 38px
         '5xl': ['3rem', { lineHeight: '1.12' }],     // 48px
+        '6xl': ['3.75rem', { lineHeight: '1.06' }],  // 60px, landing hero
       },
       borderRadius: {
         DEFAULT: '12px', // PRD: rounded 12px corners
@@ -90,6 +99,12 @@ export default {
         card: '0 1px 3px rgba(26, 35, 50, 0.06), 0 4px 16px rgba(26, 35, 50, 0.05)',
         lift: '0 2px 6px rgba(26, 35, 50, 0.08), 0 10px 28px rgba(26, 35, 50, 0.09)',
         press: 'inset 0 2px 4px rgba(26, 35, 50, 0.08)',
+        glow: '0 8px 40px rgba(232, 160, 76, 0.35), 0 2px 12px rgba(26, 35, 50, 0.08)',
+        deep: '0 24px 70px -18px rgba(20, 40, 35, 0.45)',
+      },
+      transitionTimingFunction: {
+        spring: 'cubic-bezier(0.34, 1.4, 0.44, 1)',
+        gentle: 'cubic-bezier(0.22, 0.9, 0.3, 1)',
       },
       maxWidth: {
         visit: '44rem', // the calm single-column width of the check-in flow

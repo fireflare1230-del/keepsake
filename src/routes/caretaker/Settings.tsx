@@ -14,7 +14,13 @@ import {
 } from '../../lib/cloud'
 import { friendlyDateTime } from '../../lib/dates'
 import { hashPin } from '../../lib/pin'
-import { canSpeak, listVoices, speak, whenVoicesReady } from '../../lib/speech'
+import {
+  canSpeak,
+  isFemaleVoice,
+  listVoices,
+  speak,
+  whenVoicesReady,
+} from '../../lib/speech'
 import { downloadReminderIcs } from '../../lib/reminder'
 import {
   buildBackup,
@@ -293,8 +299,10 @@ export default function Settings() {
               Lane&rsquo;s voice
             </label>
             <p className="mb-3 text-base text-ink-faint">
-              Keepsake picks the most natural voice your device offers. You
-              can choose a different one and hear a sample.
+              Keepsake picks the warmest woman&rsquo;s voice your device
+              offers. Voices marked <em>natural</em> are the modern neural
+              ones and sound close to human; the rest are older robotic
+              system voices.
             </p>
             <div className="flex flex-wrap items-center gap-3">
               <select
@@ -305,11 +313,12 @@ export default function Settings() {
                   persist({ ...settings, voiceURI: e.target.value || undefined })
                 }
               >
-                <option value="">Automatic (best available)</option>
+                <option value="">Automatic (warmest available)</option>
                 {voices.map((voice) => (
                   <option key={voice.voiceURI} value={voice.voiceURI}>
                     {voice.name.replace(/^Microsoft\s|\(Natural\)\s*|- English.*$/g, '').trim() || voice.name}
-                    {/natural|neural/i.test(voice.name) ? ' (natural)' : ''}
+                    {/natural|neural/i.test(voice.name) ? ' · natural' : ''}
+                    {isFemaleVoice(voice) ? ' · woman' : ''}
                   </option>
                 ))}
               </select>
@@ -325,10 +334,28 @@ export default function Settings() {
                 🔊 Hear a sample
               </Button>
             </div>
-            <p className="mt-3 text-base text-ink-faint">
-              Tip: on Windows tablets, Microsoft Edge offers the most
-              natural-sounding voices.
-            </p>
+            <div className="mt-4 rounded-sm border border-cream-deep bg-cream-soft/70 px-4 py-3 text-base text-ink-muted">
+              <p className="font-semibold text-ink">Want a more human voice?</p>
+              <ul className="mt-1.5 space-y-1">
+                <li>
+                  <strong>Android tablet or phone:</strong> Settings →
+                  Accessibility → Text-to-speech, and install the
+                  &ldquo;Speech Recognition &amp; Synthesis by
+                  Google&rdquo; voices. Its natural voices are the best
+                  free option.
+                </li>
+                <li>
+                  <strong>Windows tablet:</strong> open Keepsake in Microsoft
+                  Edge instead of Chrome. Edge adds the Natural voices
+                  (Aria, Jenny), which sound close to a real person.
+                </li>
+                <li>
+                  <strong>iPad or iPhone:</strong> Settings → Accessibility →
+                  Spoken Content → Voices, and download an Enhanced or
+                  Premium voice such as Samantha or Ava.
+                </li>
+              </ul>
+            </div>
           </div>
         )}
       </section>

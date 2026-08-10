@@ -63,7 +63,12 @@ export default {
         },
       },
       fontFamily: {
-        sans: [
+        // Body across the family-facing app: a book face, not a UI face.
+        sans: ['Literata', 'Iowan Old Style', 'Georgia', 'serif'],
+        // Headlines: editorial serif with real personality.
+        display: ['Newsreader', 'Iowan Old Style', 'Georgia', 'serif'],
+        // The patient visit flow only (accessibility contract).
+        legible: [
           'Atkinson Hyperlegible',
           'system-ui',
           '-apple-system',
@@ -71,12 +76,7 @@ export default {
           'Roboto',
           'sans-serif',
         ],
-        display: ['Fraunces', 'Georgia', 'Times New Roman', 'serif'],
-      },
-      fontWeight: {
-        // Atkinson Hyperlegible ships 400/700 only; snap semibold to 700
-        // so nothing renders as faux-bold.
-        semibold: '700',
+        hand: ['Segoe Script', 'Bradley Hand', 'Comic Sans MS', 'cursive'],
       },
       fontSize: {
         // Elderly-friendly scale (NFR-1): body starts at 18px.

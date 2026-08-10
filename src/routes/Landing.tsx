@@ -132,67 +132,78 @@ export default function Landing() {
         <Reveal>
           <h2 className="text-center text-3xl">How it works</h2>
         </Reveal>
-        <div className="mt-10 grid gap-6 md:grid-cols-3">
+        {/* Three steps, three different objects on the page: a filled-in
+            index card, a snapshot, a note torn from a pad. Nothing here
+            is the same shape twice. */}
+        <div className="mt-12 grid gap-x-10 gap-y-14 md:grid-cols-3">
           <Reveal delay={0}>
-            <div className="card flex h-full flex-col p-7 transition-all duration-300 ease-gentle hover:-translate-y-1.5 hover:shadow-lift">
-              <StepBadge n="1" />
-              <h3 className="mt-4 text-xl">Tell Keepsake their story</h3>
-              <p className="mt-2 text-ink-muted">
+            <div className="flex h-full flex-col">
+              <div className="flex items-baseline gap-4 border-t border-[#cbbb9c] pt-4">
+                <span aria-hidden="true" className="numeral">1</span>
+                <h3 className="text-2xl">Tell Keepsake their story</h3>
+              </div>
+              <p className="mt-3 text-ink-muted">
                 The people they love, their songs, their team, their photos.
               </p>
-              <div aria-hidden="true" className="mt-5 rounded-lg border border-cream-deep bg-cream-soft/60 p-4">
-                <p className="text-sm font-semibold uppercase tracking-wide text-ink-faint">
-                  Their favorite things
-                </p>
-                <div className="mt-2.5 flex flex-wrap gap-2">
-                  <MiniTag>♪ Moon River</MiniTag>
-                  <MiniTag>🏈 The Braves</MiniTag>
-                  <MiniTag>🥤 Sweet tea</MiniTag>
-                  <MiniTag>🎬 Westerns</MiniTag>
-                </div>
+              <div aria-hidden="true" className="index-card mt-6 rotate-[-0.8deg]">
+                <p className="hand text-lg text-[#8A4B2A]">Walter&rsquo;s favorites</p>
+                <ul className="mt-1.5 space-y-1 text-base leading-[32px]">
+                  <li>♪ &nbsp;Moon River</li>
+                  <li>⚾ &nbsp;the Braves</li>
+                  <li>🥤 &nbsp;sweet tea, no lemon</li>
+                  <li>🎬 &nbsp;westerns</li>
+                </ul>
               </div>
             </div>
           </Reveal>
 
           <Reveal delay={0.12}>
-            <div className="card flex h-full flex-col p-7 transition-all duration-300 ease-gentle hover:-translate-y-1.5 hover:shadow-lift">
-              <StepBadge n="2" />
-              <h3 className="mt-4 text-xl">Hand over the tablet</h3>
-              <p className="mt-2 text-ink-muted">
+            <div className="flex h-full flex-col">
+              <div className="flex items-baseline gap-4 border-t border-[#cbbb9c] pt-4">
+                <span aria-hidden="true" className="numeral">2</span>
+                <h3 className="text-2xl">Hand over the tablet</h3>
+              </div>
+              <p className="mt-3 text-ink-muted">
                 Lane guides a calm visit. Big buttons, nothing to get wrong.
               </p>
-              <div aria-hidden="true" className="mt-5 rounded-lg border border-cream-deep bg-cream-soft/60 p-4">
-                <p className="text-center text-base font-semibold">
-                  How are you feeling today?
-                </p>
-                <div className="mt-2.5 flex justify-center gap-2 text-2xl">
-                  <span className="rounded-lg bg-[#FFFDF9] px-2 py-1 shadow-card">😐</span>
-                  <span className="rounded-lg bg-[#FFFDF9] px-2 py-1 shadow-card">🙂</span>
-                  <span className="rounded-lg border-2 border-brand bg-brand-wash px-2 py-1 shadow-card">😄</span>
+              <figure aria-hidden="true" className="polaroid relative mt-6 rotate-[1.4deg]">
+                <span className="tape left-1/2 top-[-13px] -translate-x-1/2 rotate-[-3deg]" />
+                <div className="flex h-[128px] flex-col items-center justify-center bg-[#F0E7D5] px-4 text-center">
+                  <p className="font-legible text-base font-bold text-[#4C3B2C]">
+                    How are you feeling today?
+                  </p>
+                  <div className="mt-2.5 flex gap-2 text-2xl">
+                    <span>😐</span>
+                    <span>🙂</span>
+                    <span className="rounded border-2 border-[#A06B3A] bg-[#F5ECD9] px-1.5">😄</span>
+                  </div>
                 </div>
-              </div>
+                <figcaption className="hand mt-2.5 text-center text-lg text-[#4C3B2C]">
+                  Tuesday morning, together
+                </figcaption>
+              </figure>
             </div>
           </Reveal>
 
           <Reveal delay={0.24}>
-            <div className="card flex h-full flex-col p-7 transition-all duration-300 ease-gentle hover:-translate-y-1.5 hover:shadow-lift">
-              <StepBadge n="3" />
-              <h3 className="mt-4 text-xl">Watch Keepsake learn</h3>
-              <p className="mt-2 text-ink-muted">
+            <div className="flex h-full flex-col">
+              <div className="flex items-baseline gap-4 border-t border-[#cbbb9c] pt-4">
+                <span aria-hidden="true" className="numeral">3</span>
+                <h3 className="text-2xl">Watch Keepsake learn</h3>
+              </div>
+              <p className="mt-3 text-ink-muted">
                 Lane notices what lights them up. You approve every discovery.
               </p>
-              <div aria-hidden="true" className="mt-5 rounded-lg border border-cream-deep bg-cream-soft/60 p-4">
-                <p className="text-sm font-semibold uppercase tracking-wide text-ink-faint">
-                  Lane noticed
+              <div aria-hidden="true" className="torn mt-6 rotate-[-0.5deg]">
+                <p className="section-label">Lane noticed</p>
+                <p className="mt-2 text-lg italic">
+                  &ldquo;I sang in the church choir, tenor&rdquo;
                 </p>
-                <p className="mt-2 text-base">
-                  🎶 &ldquo;I sang in the church choir, tenor&rdquo;
-                </p>
-                <div className="mt-2.5 flex gap-2">
-                  <span className="rounded-full bg-moss-wash px-3 py-1 text-sm font-semibold text-moss-deep">
+                <div className="mt-3 flex gap-2">
+                  <span className="rounded-sm bg-moss-wash px-3 py-1 text-sm font-semibold text-moss-deep">
                     Add to profile
                   </span>
-                  <span className="rounded-full bg-cream-deep px-3 py-1 text-sm font-semibold text-ink-faint">
+                  <span className="rounded-sm bg-cream-deep px-3 py-1 text-sm font-semibold text-ink-faint">
                     Not right
                   </span>
                 </div>
@@ -448,18 +459,3 @@ function LiveDemo() {
 
 /* ------------------------------ tiny pieces ------------------------------ */
 
-function MiniTag({ children }: { children: string }) {
-  return (
-    <span className="rounded-full bg-[#FFFDF9] px-3 py-1.5 text-sm font-semibold shadow-card">
-      {children}
-    </span>
-  )
-}
-
-function StepBadge({ n }: { n: string }) {
-  return (
-    <span className="flex h-12 w-12 items-center justify-center rounded-full bg-amber font-display text-xl font-bold text-ink">
-      {n}
-    </span>
-  )
-}

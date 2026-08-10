@@ -134,12 +134,12 @@ export default function Dashboard() {
 
       {/* ---------------------- quick-start checklist --------------------- */}
       {!setupComplete && (
-        <section className="card mt-8" aria-labelledby="checklist-heading">
+        <section className="index-card mt-8 rotate-[-0.35deg]" aria-labelledby="checklist-heading">
           <div className="flex items-baseline justify-between gap-4">
             <h2 id="checklist-heading" className="text-2xl">
               Getting set up
             </h2>
-            <span className="text-base font-semibold text-ink-muted">
+            <span className="hand text-lg text-[#8A4B2A]">
               {coreItems.filter((i) => i.done).length} of {coreItems.length} done
             </span>
           </div>
@@ -188,20 +188,22 @@ export default function Dashboard() {
 
       {/* --------------------------- keepsake shelf ------------------------- */}
       {data.completed.length > 0 && (
-        <section className="card mt-8" aria-labelledby="shelf-heading">
-          <h2 id="shelf-heading" className="text-2xl">
+        <section className="sheet mt-10" aria-labelledby="shelf-heading">
+          <p className="section-label">Kept so far</p>
+          <h2 id="shelf-heading" className="mt-1 text-2xl">
             The keepsake shelf
           </h2>
-          <p className="mt-2 text-base text-ink-muted">
+          <p className="mt-2 max-w-xl text-base text-ink-muted">
             Every visit leaves a little memento. A quiet record that the
             ritual is alive.
           </p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            {data.completed.slice(0, 21).map((visit) => (
+          <div className="mt-5 flex flex-wrap gap-2.5">
+            {data.completed.slice(0, 21).map((visit, index) => (
               <span
                 key={visit.id}
                 title={`${visit.theme} · ${new Date(visit.date).toLocaleDateString()}`}
-                className="flex h-11 w-11 items-center justify-center rounded-lg bg-cream-soft text-2xl shadow-card"
+                className="flex h-12 w-12 items-center justify-center border border-[#dcccb0] bg-[#FFFDF6] text-2xl shadow-[2px_2px_0_rgba(61,47,36,0.1)]"
+                style={{ transform: `rotate(${(index % 3) - 1}deg)` }}
               >
                 {THEMES.find((t) => t.name === visit.theme)?.emoji ?? '💛'}
               </span>

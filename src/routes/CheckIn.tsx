@@ -816,7 +816,9 @@ function Shell({
   onExit: () => void
 }) {
   return (
-    <div className="min-h-screen">
+    /* The visit opts into Atkinson Hyperlegible: on the one screen a
+       person with Alzheimer's actually uses, legibility outranks style. */
+    <div className="type-legible min-h-screen">
       {preview && (
         <div className="bg-brand-wash py-2 text-center font-semibold text-brand-deeper">
           Caretaker preview, nothing will be saved

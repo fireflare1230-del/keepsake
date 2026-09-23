@@ -42,7 +42,7 @@ export default function Report() {
       <div className="no-print mb-6 flex flex-wrap items-center justify-between gap-4">
         <Link
           to=".."
-          className="font-semibold text-brand-deep underline underline-offset-4"
+          className="inline-flex min-h-[44px] items-center font-semibold text-brand-deep underline underline-offset-4"
         >
           ← Back to the dashboard
         </Link>

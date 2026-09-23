@@ -21,7 +21,7 @@ export default function Chip({
     <button
       onClick={onClick}
       disabled={disabled}
-      className="min-h-[60px] rounded-md border-2 border-[#A06B3A]/60 bg-[#FFFDF6] px-7 py-3 text-xl font-semibold text-ink shadow-[2px_3px_0_rgba(160,107,58,0.3)] transition-all duration-150 odd:rotate-[-0.6deg] even:rotate-[0.7deg] hover:rotate-0 hover:border-[#A06B3A] hover:bg-[#F5ECD9] active:scale-[0.985] active:shadow-press disabled:opacity-45"
+      className="min-h-[60px] rounded-md border-2 border-[#946033]/60 bg-[#FFFDF6] px-7 py-3 text-xl font-semibold text-ink shadow-[2px_3px_0_rgba(160,107,58,0.3)] transition-all duration-150 odd:rotate-[-0.6deg] even:rotate-[0.7deg] hover:rotate-0 hover:border-[#946033] hover:bg-[#F5ECD9] active:scale-[0.985] active:shadow-press disabled:opacity-45"
     >
       {children}
     </button>

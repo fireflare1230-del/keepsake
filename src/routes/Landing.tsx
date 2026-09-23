@@ -97,7 +97,7 @@ export default function Landing() {
           aria-hidden="true"
           className="hand pointer-events-none absolute -bottom-1 right-14 hidden rotate-[-2deg] text-lg text-[#8A4B2A] md:block"
         >
-          a real visit, playing itself ↗
+          this is what a visit looks like ↗
         </p>
       </section>
 
@@ -112,7 +112,7 @@ export default function Landing() {
       </section>
 
       {/* ------------------------------ story ------------------------------- */}
-      <section className="bg-brand-wash/60 py-16">
+      <section className="bg-brand-wash/60 py-12">
         <div className="mx-auto max-w-3xl px-6 text-center">
           <Reveal>
             <LogoMark size={44} />
@@ -128,14 +128,14 @@ export default function Landing() {
       </section>
 
       {/* --------------------------- how it works --------------------------- */}
-      <section id="how-it-works" className="mx-auto max-w-6xl scroll-mt-8 px-6 py-16">
+      <section id="how-it-works" className="mx-auto max-w-6xl scroll-mt-8 px-6 py-12">
         <Reveal>
           <h2 className="text-center text-3xl">How it works</h2>
         </Reveal>
         {/* Three steps, three different objects on the page: a filled-in
             index card, a snapshot, a note torn from a pad. Nothing here
             is the same shape twice. */}
-        <div className="mt-12 grid gap-x-10 gap-y-14 md:grid-cols-3">
+        <div className="mt-10 grid gap-x-10 gap-y-12 md:grid-cols-3">
           <Reveal delay={0}>
             <div className="flex h-full flex-col">
               <div className="flex items-baseline gap-4 border-t border-[#cbbb9c] pt-4">
@@ -176,7 +176,7 @@ export default function Landing() {
                   <div className="mt-2.5 flex gap-2 text-2xl">
                     <span>😐</span>
                     <span>🙂</span>
-                    <span className="rounded border-2 border-[#A06B3A] bg-[#F5ECD9] px-1.5">😄</span>
+                    <span className="rounded border-2 border-[#946033] bg-[#F5ECD9] px-1.5">😄</span>
                   </div>
                 </div>
                 <figcaption className="hand mt-2.5 text-center text-lg text-[#4C3B2C]">
@@ -215,7 +215,7 @@ export default function Landing() {
       </section>
 
       {/* --------------------------- gentle by design ------------------------ */}
-      <section className="mx-auto max-w-6xl px-6 pb-16">
+      <section className="mx-auto max-w-6xl px-6 pb-12">
         <Reveal>
           <div className="overflow-hidden rounded-2xl bg-evergreen text-cream shadow-deep">
             <div className="grid items-center gap-10 p-8 md:grid-cols-[1fr_1fr] md:p-12">
@@ -228,10 +228,8 @@ export default function Landing() {
                 <ul className="mt-6 space-y-3">
                   {[
                     'Never quizzes, never corrects',
-                    'Big tap-able answers, nothing to get wrong',
                     'Rewards showing up, never scores memory',
-                    'Learns their favorites over time, you approve every one',
-                    'Everything stays on your device',
+                    'Nothing is remembered until you approve it',
                   ].map((line) => (
                     <li key={line} className="flex items-start gap-3">
                       <span
@@ -247,7 +245,6 @@ export default function Landing() {
               </div>
 
               <div aria-hidden="true" className="relative mx-auto w-full max-w-xs">
-                <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-sage/20" />
                 <div className="card relative rotate-[1.4deg] p-6 text-center shadow-lift">
                   <span className="text-4xl">🌻</span>
                   <p className="mt-2 font-display text-2xl font-semibold">
@@ -265,7 +262,7 @@ export default function Landing() {
       </section>
 
       {/* ------------------------------ final CTA ---------------------------- */}
-      <section className="mx-auto max-w-5xl px-6 pb-20 text-center">
+      <section className="mx-auto max-w-5xl px-6 pb-16 text-center">
         <Reveal>
           <h2 className="text-3xl">Start their first visit today.</h2>
           <p className="mx-auto mt-3 max-w-xl text-lg text-ink-muted">
@@ -293,7 +290,10 @@ export default function Landing() {
           </p>
           <p className="mt-4 text-base text-ink-faint">
             Reconnect. Remember. ·{' '}
-            <Link to="/care" className="underline underline-offset-4">
+            <Link
+              to="/care"
+              className="inline-flex min-h-[44px] items-center underline underline-offset-4"
+            >
               Caretaker area
             </Link>
           </p>
@@ -370,11 +370,22 @@ function LiveDemo() {
   const [turnIndex, setTurnIndex] = useState(0)
   const [phase, setPhase] = useState<DemoPhase>('typing')
   const [typed, setTyped] = useState(reduced ? DEMO_TURNS[0].lane : '')
+  // The demo plays through once and then rests. Dementia-design guidance is
+  // explicit that content which moves forever is distracting and pushes
+  // people to abandon the page, so nothing here loops on its own.
+  const [done, setDone] = useState(false)
   const timers = useRef<number[]>([])
   const turn = DEMO_TURNS[turnIndex]
 
+  const replay = () => {
+    setTurnIndex(0)
+    setTyped('')
+    setPhase('typing')
+    setDone(false)
+  }
+
   useEffect(() => {
-    if (reduced) return
+    if (reduced || done) return
     const wait = (ms: number, fn: () => void) => {
       timers.current.push(window.setTimeout(fn, ms))
     }
@@ -391,7 +402,11 @@ function LiveDemo() {
       wait(650, () => setPhase('replied'))
     } else if (phase === 'replied') {
       wait(1900, () => {
-        setTurnIndex((i) => (i + 1) % DEMO_TURNS.length)
+        if (turnIndex === DEMO_TURNS.length - 1) {
+          setDone(true)
+          return
+        }
+        setTurnIndex((i) => i + 1)
         setTyped('')
         setPhase('typing')
       })
@@ -400,14 +415,14 @@ function LiveDemo() {
       timers.current.forEach(clearTimeout)
       timers.current = []
     }
-  }, [phase, typed, turn.lane, reduced])
+  }, [phase, typed, turn.lane, reduced, turnIndex, done])
 
   const showChips = reduced || phase !== 'typing'
   const showReply = reduced || phase === 'replied'
 
   return (
-    <div aria-hidden="true" className="relative mx-auto w-full max-w-md">
-      <div className="card relative rotate-[-1.2deg] p-6 shadow-deep">
+    <div className="relative mx-auto w-full max-w-md">
+      <div aria-hidden="true" className="card relative rotate-[-1.2deg] p-6 shadow-deep">
         <span className="tape left-1/2 top-[-13px] -translate-x-1/2 rotate-[-2deg]" />
         <span className="tape bottom-[-11px] right-[-26px] rotate-[42deg]" style={{ width: 64 }} />
         <div className="flex items-start gap-3">
@@ -450,10 +465,27 @@ function LiveDemo() {
         )}
 
         <div className="mt-5 flex items-center gap-2 border-t border-cream-deep pt-4 text-base text-ink-faint">
-          <span className="inline-block h-2.5 w-2.5 animate-pulse rounded-full bg-moss" />
-          Live demo · Today&rsquo;s theme: Childhood summers
+          <span
+            className={
+              'inline-block h-2.5 w-2.5 rounded-full bg-moss' +
+              (done || reduced ? '' : ' animate-pulse')
+            }
+          />
+          Sample visit · Theme: Childhood summers
         </div>
       </div>
+
+      {(done || reduced) && (
+        <div className="mt-3 flex justify-center">
+          <button
+            type="button"
+            onClick={replay}
+            className="min-h-[44px] rounded-lg px-4 text-base font-semibold text-ink-muted underline underline-offset-4 hover:text-ink"
+          >
+            ↻ Play the sample visit again
+          </button>
+        </div>
+      )}
     </div>
   )
 }

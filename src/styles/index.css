@@ -101,7 +101,7 @@
     width: 1.6rem;
     height: 3px;
     border-radius: 2px;
-    background: #a06b3a;
+    background: #946033;
   }
 
   /* A hand-highlighter swash behind a key phrase, in washi gold */
@@ -250,7 +250,7 @@
     font-weight: 600;
     letter-spacing: 0.2em;
     text-transform: uppercase;
-    color: #8a7358;
+    color: #7a6146;
   }
 
   /* Hanging numeral for numbered editorial steps. */
@@ -355,6 +355,10 @@
   .card {
     @apply rounded-xl p-6;
     background-color: #fffdf6;
+    /* A card carries its own ink. Without this it inherits the text colour
+       of whatever it sits in, and a card dropped inside a dark panel turns
+       cream-on-white, which is invisible. */
+    color: #3a2d22;
     border: 1px solid #dcccb0;
     box-shadow: 3px 4px 0 rgba(61, 47, 36, 0.1);
   }
@@ -411,7 +415,7 @@
   /* Lane is "thinking", three soft dots, slow and unhurried */
   .thinking-dot {
     @apply inline-block h-2.5 w-2.5 rounded-full;
-    background-color: #a06b3a;
+    background-color: #946033;
     animation: thinking 1.6s ease-in-out infinite;
   }
   .thinking-dot:nth-child(2) { animation-delay: 0.25s; }
@@ -448,7 +452,7 @@
 /* Text inks: warm walnut family. */
 .text-ink { color: #3a2d22; }
 .text-ink-muted { color: #6b5947; }
-.text-ink-faint { color: #7d6c58; }
+.text-ink-faint { color: #655440; }
 
 /* Primary accent (was amber): washi brass for badges and washes. */
 .bg-amber { background-color: #d4b778; }
@@ -458,14 +462,14 @@
 .border-amber\/60 { border-color: rgba(160, 107, 58, 0.6); }
 
 /* Brand (was dusty blue): leather brown and pen ink. */
-.bg-brand { background-color: #a06b3a; }
+.bg-brand { background-color: #946033; }
 .bg-brand-wash,
 .hover\:bg-brand-wash:hover { background-color: #f5ecd9; }
 .text-brand-deep { color: #8a4b2a; }
 .text-brand-deeper { color: #6e3a20; }
-.border-brand { border-color: #a06b3a; }
+.border-brand { border-color: #946033; }
 .border-brand\/40 { border-color: rgba(160, 107, 58, 0.45); }
-.hover\:border-brand:hover { border-color: #a06b3a; }
+.hover\:border-brand:hover { border-color: #946033; }
 .bg-brand-deep { background-color: #8a4b2a; }
 .hover\:bg-brand-deeper:hover { background-color: #6e3a20; }
 

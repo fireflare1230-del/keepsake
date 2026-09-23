@@ -103,7 +103,7 @@ export default function ProfileEditor() {
         <h1 className="text-3xl">{profile.preferredName}&rsquo;s profile</h1>
         <Link
           to="../profiles"
-          className="font-semibold text-brand-deep underline underline-offset-4"
+          className="inline-flex min-h-[44px] items-center font-semibold text-brand-deep underline underline-offset-4"
         >
           Switch or add profiles →
         </Link>

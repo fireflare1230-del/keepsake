@@ -88,7 +88,7 @@ export default function LaneNoticed({
         {decided.length > 0 && (
           <button
             onClick={() => setShowHistory((s) => !s)}
-            className="text-base font-semibold text-brand-deep underline-offset-4 hover:underline"
+            className="inline-flex min-h-[44px] items-center rounded-lg px-2 text-base font-semibold text-brand-deep underline-offset-4 hover:underline"
           >
             {showHistory ? 'Hide history' : 'History'}
           </button>

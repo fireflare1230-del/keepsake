@@ -833,7 +833,7 @@ function Shell({
         )}
         <button
           onClick={onExit}
-          className="whitespace-nowrap text-base font-semibold text-ink-faint underline-offset-4 hover:underline"
+          className="inline-flex min-h-[48px] items-center whitespace-nowrap rounded-lg px-3 text-base font-semibold text-ink-faint underline-offset-4 hover:underline"
         >
           {preview ? 'Exit preview' : 'Save & rest'}
         </button>

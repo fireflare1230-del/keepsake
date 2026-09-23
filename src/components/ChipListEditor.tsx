@@ -71,7 +71,7 @@ export default function ChipListEditor({
                 type="button"
                 onClick={() => onChange(values.filter((v) => v !== value))}
                 aria-label={`Remove "${value}"`}
-                className="text-lg leading-none opacity-70 hover:opacity-100"
+                className="-mr-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-lg leading-none opacity-70 hover:bg-black/5 hover:opacity-100"
               >
                 ×
               </button>

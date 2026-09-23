@@ -102,7 +102,7 @@ function CaretakerHeader({ onLock }: { onLock: () => void }) {
       <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4 px-6 py-5">
         <button
           onClick={() => navigate('/')}
-          className="rounded-lg"
+          className="inline-flex min-h-[48px] items-center rounded-lg px-1"
           aria-label="Back to the Keepsake home page"
         >
           <LogoLockup size={30} />

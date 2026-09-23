@@ -65,10 +65,10 @@ export default function Landing() {
                 className="mt-6 max-w-xl text-xl leading-relaxed text-ink-muted opacity-0"
                 style={{ animation: 'stepEnter 0.7s ease-out 1.1s forwards' }}
               >
-                A short daily visit with Lane, a gentle companion who{' '}
-                <span className="accent-word">shares</span> memories instead of
-                testing them. Built on dementia-care research, private by
-                design.
+                You set it up once. They get a short daily visit with Lane, a
+                gentle companion who <span className="accent-word">shares</span>{' '}
+                memories instead of testing them. Built to be done side by side,
+                the way dementia-care research says it works.
               </p>
               <div
                 className="mt-8 flex flex-wrap items-center gap-4 opacity-0"
@@ -105,7 +105,7 @@ export default function Landing() {
       <section className="border-y border-cream-deep bg-[#FFFDF9]/70">
         <div className="mx-auto grid max-w-6xl grid-cols-2 gap-6 px-6 py-8 md:grid-cols-4">
           <Fact n={12} label="rotating memory themes" />
-          <Fact n={7} label="golden rules of dementia care" />
+          <Fact n={7} label="dementia-care rules it never breaks" />
           <Fact n={1} label="gentle visit a day" />
           <Fact n={0} label="servers holding their data" />
         </div>
@@ -161,10 +161,11 @@ export default function Landing() {
             <div className="flex h-full flex-col">
               <div className="flex items-baseline gap-4 border-t border-[#cbbb9c] pt-4">
                 <span aria-hidden="true" className="numeral">2</span>
-                <h3 className="text-2xl">Hand over the tablet</h3>
+                <h3 className="text-2xl">Sit down together</h3>
               </div>
               <p className="mt-3 text-ink-muted">
-                Lane guides a calm visit. Big buttons, nothing to get wrong.
+                Open it beside them and let Lane lead. Big buttons, nothing to
+                get wrong.
               </p>
               <figure aria-hidden="true" className="polaroid relative mt-6 rotate-[1.4deg]">
                 <span className="tape left-1/2 top-[-13px] -translate-x-1/2 rotate-[-3deg]" />
@@ -291,7 +292,7 @@ export default function Landing() {
             healthcare providers for medical concerns.
           </p>
           <p className="mt-4 text-base text-ink-faint">
-            Reconnect. Remember. · v1.4 ·{' '}
+            Reconnect. Remember. ·{' '}
             <Link to="/care" className="underline underline-offset-4">
               Caretaker area
             </Link>

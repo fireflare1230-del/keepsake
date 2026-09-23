@@ -134,7 +134,7 @@ function CaretakerHeader({ onLock }: { onLock: () => void }) {
               Lock 🔒
             </Button>
           )}
-          <Button onClick={() => navigate('/visit')}>Hand over the tablet →</Button>
+          <Button onClick={() => navigate('/visit')}>Sit down together →</Button>
         </div>
       </div>
 

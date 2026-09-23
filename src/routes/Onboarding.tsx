@@ -21,7 +21,8 @@ import { emptyFavorites, type Profile } from '../types'
  * the bare minimum (just names) so setup takes under two minutes:
  *
  *   1. Who is this for?  , name + preferred name (required)
- *   2. A few warm details, birth year, hometown, a happy memory (optional)
+ *   2. A few warm details, birth year, hometown, something they like
+ *      talking about (all optional)
  *   3. AI conversation   , paste an Anthropic key (optional, "later" is fine)
  *   4. Caretaker PIN     , set a PIN (recommended, skippable)
  */
@@ -181,12 +182,12 @@ export default function Onboarding() {
                   placeholder="Mobile, Alabama"
                 />
                 <TextArea
-                  label="One happy memory"
+                  label="Something they like to talk about"
                   optional
                   value={happyMemory}
                   onChange={(e) => setHappyMemory(e.target.value)}
-                  placeholder="Summer evenings on the porch with sweet tea…"
-                  hint="Lane will bring this up gently, never as a quiz."
+                  placeholder="The porch on summer evenings. Or his years at the mill, or her garden."
+                  hint="It does not have to be a big moment, and you can change it any time. Small and ordinary works best. Lane brings it up gently, never as a quiz."
                 />
               </div>
             </>

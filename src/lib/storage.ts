@@ -433,6 +433,87 @@ export function buildBackup(): BackupFile {
  * profiles/visits with the same id are replaced, everything else is kept.
  * Returns a human-readable result for the settings screen.
  */
+/**
+ * Coerce one profile from a backup file into a profile the app can
+ * actually render, or return null if it is too broken to use.
+ *
+ * A backup is a file a caretaker picked off a disk. It can be truncated,
+ * hand-edited, from an older version, or simply the wrong file. Before
+ * this existed, a profile missing its `family` array sailed through
+ * restore and then white-screened the whole app on the next render, with
+ * no UI left to undo it.
+ */
+function sanitizeProfile(input: unknown): Profile | null {
+  if (!input || typeof input !== 'object') return null
+  const p = input as Record<string, unknown>
+  const str = (v: unknown) => (typeof v === 'string' ? v : undefined)
+  const strList = (v: unknown) =>
+    Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : []
+
+  const id = str(p.id)
+  const preferredName = str(p.preferredName) ?? str(p.name)
+  if (!id || !preferredName) return null
+
+  const favorites = (p.favorites ?? {}) as Record<string, unknown>
+  const year = Number(p.birthYear)
+
+  return {
+    id,
+    name: str(p.name) ?? preferredName,
+    preferredName,
+    birthYear:
+      Number.isInteger(year) && year >= 1900 && year <= new Date().getFullYear()
+        ? year
+        : undefined,
+    hometown: str(p.hometown),
+    happyMemory: str(p.happyMemory),
+    family: Array.isArray(p.family)
+      ? (p.family as unknown[]).flatMap((m) => {
+          const person = m as Record<string, unknown>
+          const name = str(person?.name)
+          if (!name) return []
+          return [
+            {
+              id: str(person.id) ?? uid(),
+              name,
+              relationship: str(person.relationship) ?? '',
+              notes: str(person.notes),
+            },
+          ]
+        })
+      : [],
+    favoriteMusic: Array.isArray(p.favoriteMusic)
+      ? (p.favoriteMusic as unknown[]).flatMap((m) => {
+          const song = m as Record<string, unknown>
+          const title = str(song?.title)
+          const videoId = str(song?.videoId)
+          // Without a playable id the song is a dead entry in the player.
+          if (!title || !videoId) return []
+          return [
+            {
+              id: str(song.id) ?? uid(),
+              title,
+              youtubeUrl: str(song.youtubeUrl) ?? '',
+              videoId,
+            },
+          ]
+        })
+      : [],
+    favorites: {
+      sports: strList(favorites.sports),
+      drinks: strList(favorites.drinks),
+      foods: strList(favorites.foods),
+      shows: strList(favorites.shows),
+      hobbies: strList(favorites.hobbies),
+    },
+    lifeStory: str(p.lifeStory),
+    topicsToAvoid: strList(p.topicsToAvoid),
+    factsToReinforce: strList(p.factsToReinforce),
+    createdAt: str(p.createdAt) ?? new Date().toISOString(),
+    updatedAt: str(p.updatedAt) ?? new Date().toISOString(),
+  }
+}
+
 export function restoreBackup(raw: string): { ok: boolean; message: string } {
   let data: BackupFile
   try {
@@ -444,12 +525,28 @@ export function restoreBackup(raw: string): { ok: boolean; message: string } {
     return { ok: false, message: "That file doesn't look like a Keepsake backup." }
   }
 
+  const incomingProfiles = data.profiles as unknown[]
+  const profiles: Profile[] = []
+  for (const candidate of incomingProfiles) {
+    const clean = sanitizeProfile(candidate)
+    if (clean) profiles.push(clean)
+  }
+  const skipped = incomingProfiles.length - profiles.length
+
+  if (!profiles.length) {
+    return {
+      ok: false,
+      message:
+        "That file is a Keepsake backup, but none of the profiles in it could be read. Nothing was changed.",
+    }
+  }
+
   const existing = loadProfiles()
   const byId = new Map(existing.map((p) => [p.id, p]))
-  for (const profile of data.profiles) byId.set(profile.id, profile)
+  for (const profile of profiles) byId.set(profile.id, profile)
   write(K.profiles, Array.from(byId.values()))
 
-  for (const profile of data.profiles) {
+  for (const profile of profiles) {
     const incoming = data.visits?.[profile.id] ?? []
     const current = loadVisits(profile.id)
     const visitById = new Map(current.map((v) => [v.id, v]))
@@ -469,17 +566,22 @@ export function restoreBackup(raw: string): { ok: boolean; message: string } {
     }
   }
 
-  if (!loadAppState().activeProfileId && data.profiles[0]) {
-    setActiveProfile(data.profiles[0].id)
+  if (!loadAppState().activeProfileId && profiles[0]) {
+    setActiveProfile(profiles[0].id)
   }
 
-  const profileCount = data.profiles.length
+  const profileCount = profiles.length
   const visitCount = Object.values(data.visits ?? {}).reduce(
-    (n, list) => n + list.length,
+    (n, list) => n + (Array.isArray(list) ? list.length : 0),
     0
   )
+  const skippedNote = skipped
+    ? ` ${skipped} entr${skipped === 1 ? 'y' : 'ies'} in the file couldn't be read and ${skipped === 1 ? 'was' : 'were'} skipped.`
+    : ''
   return {
     ok: true,
-    message: `Restored ${profileCount} profile${profileCount === 1 ? '' : 's'} and ${visitCount} visit${visitCount === 1 ? '' : 's'}.`,
+    message:
+      `Restored ${profileCount} profile${profileCount === 1 ? '' : 's'} and ${visitCount} visit${visitCount === 1 ? '' : 's'}.` +
+      skippedNote,
   }
 }

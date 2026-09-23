@@ -43,7 +43,7 @@ function profileContext(profile: Profile, theme: Theme, fact?: string): string {
   lines.push(`- Call them "${profile.preferredName}".`)
   if (profile.birthYear) lines.push(`- Born around ${profile.birthYear}.`)
   if (profile.hometown) lines.push(`- Grew up in ${profile.hometown}.`)
-  if (profile.happyMemory) lines.push(`- A reliably happy memory: ${profile.happyMemory}`)
+  if (profile.happyMemory) lines.push(`- Something they like talking about: ${profile.happyMemory}`)
   if (profile.family.length) {
     lines.push(
       `- People they love: ` +

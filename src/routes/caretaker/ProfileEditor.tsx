@@ -153,11 +153,11 @@ export default function ProfileEditor() {
           </div>
           <div className="mt-5">
             <TextArea
-              label="One happy memory"
+              label="Something they like to talk about"
               optional
               value={profile.happyMemory ?? ''}
               onChange={(e) => update({ happyMemory: e.target.value || undefined })}
-              hint="Something that reliably makes them smile. Lane shares it, never asks them to produce it."
+              hint="A place, a routine, a stretch of their life. It does not have to be a big moment. Lane shares it, never asks them to produce it."
             />
           </div>
         </section>

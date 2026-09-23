@@ -214,59 +214,13 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* --------------------------- gentle by design ------------------------ */}
-      <section className="mx-auto max-w-6xl px-6 pb-12">
-        <Reveal>
-          <div className="overflow-hidden rounded-2xl bg-evergreen text-cream shadow-deep">
-            <div className="grid items-center gap-10 p-8 md:grid-cols-[1fr_1fr] md:p-12">
-              <div>
-                <h2 className="text-3xl text-cream">Gentle by design</h2>
-                <p className="mt-2 text-cream/70">
-                  Every word follows dementia-care research. The calm is the
-                  craft.
-                </p>
-                <ul className="mt-6 space-y-3">
-                  {[
-                    'Never quizzes, never corrects',
-                    'Rewards showing up, never scores memory',
-                    'Nothing is remembered until you approve it',
-                  ].map((line) => (
-                    <li key={line} className="flex items-start gap-3">
-                      <span
-                        aria-hidden="true"
-                        className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-sage/25 text-sage"
-                      >
-                        ✓
-                      </span>
-                      <span className="text-lg text-cream/95">{line}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div aria-hidden="true" className="relative mx-auto w-full max-w-xs">
-                <div className="card relative rotate-[1.4deg] p-6 text-center shadow-lift">
-                  <span className="text-4xl">🌻</span>
-                  <p className="mt-2 font-display text-2xl font-semibold">
-                    That was a lovely visit, Walter.
-                  </p>
-                  <p className="mt-3 rounded-lg bg-amber-wash px-4 py-2.5 font-semibold text-amber-deep">
-                    ☀️ 6 days in a row
-                  </p>
-                  <p className="mt-2 text-base text-ink-faint">See you tomorrow 💛</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </Reveal>
-      </section>
-
       {/* ------------------------------ final CTA ---------------------------- */}
       <section className="mx-auto max-w-5xl px-6 pb-16 text-center">
         <Reveal>
           <h2 className="text-3xl">Start their first visit today.</h2>
           <p className="mx-auto mt-3 max-w-xl text-lg text-ink-muted">
-            Setup takes two minutes. Free, with or without an AI key.
+            Setup takes two minutes, and it is free. Keepsake celebrates
+            showing up, and never scores their memory.
           </p>
           <div className="mt-7 flex flex-wrap items-center justify-center gap-4">
             <Button size="lg" onClick={start}>

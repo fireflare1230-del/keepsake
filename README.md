@@ -22,7 +22,7 @@ a simple PIN-protected dashboard.
 You need [Node.js](https://nodejs.org) (any recent version).
 
 ```bash
-cd keepsake-app
+cd v2
 npm install       # first time only
 npm run dev       # opens at http://localhost:5173
 ```
